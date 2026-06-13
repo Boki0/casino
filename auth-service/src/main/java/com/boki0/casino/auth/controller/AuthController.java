@@ -1,6 +1,8 @@
 package com.boki0.casino.auth.controller;
 
 import com.boki0.casino.auth.dto.AuthUserResponse;
+import com.boki0.casino.auth.dto.LoginRequest;
+import com.boki0.casino.auth.dto.LoginResponse;
 import com.boki0.casino.auth.dto.RegisterRequest;
 import com.boki0.casino.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -25,5 +27,11 @@ public class AuthController {
     public ResponseEntity<AuthUserResponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthUserResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
