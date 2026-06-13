@@ -74,4 +74,16 @@ public class AuthService {
                 userResponse
         );
     }
+
+    public AuthUserResponse getCurrentUser(String email) {
+        AuthUser user = authUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return new AuthUserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus()
+        );
+    }
 }

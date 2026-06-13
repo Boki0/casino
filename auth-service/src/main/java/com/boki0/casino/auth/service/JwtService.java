@@ -1,6 +1,8 @@
 package com.boki0.casino.auth.service;
 
 import com.boki0.casino.auth.entity.AuthUser;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,27 @@ public class JwtService {
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String extractEmail(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public long getExpirationSeconds() {
