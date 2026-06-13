@@ -28,7 +28,7 @@ A USER can:
 - view wallet balance
 - play demo games
 - view own transactions
-- create support tickets
+- contact support
 
 ### Admin Features
 
@@ -39,14 +39,15 @@ An ADMIN can:
 - manage games
 - view transactions
 - view audit logs
+- close tickets
 
 ### Support Features
 
 A SUPPORT user can:
 
 - view support tickets
-- reply to tickets
-- close tickets
+- reply to users
+- open tickets
 - view basic user information in read-only mode
 
 ## Development Phases
