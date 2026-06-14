@@ -4,7 +4,9 @@ import com.boki0.casino.auth.dto.AuthUserResponse;
 import com.boki0.casino.auth.dto.LoginRequest;
 import com.boki0.casino.auth.dto.LoginResponse;
 import com.boki0.casino.auth.dto.RegisterRequest;
+import com.boki0.casino.auth.dto.RefreshTokenRequest;
 import com.boki0.casino.auth.entity.AuthUser;
+import com.boki0.casino.auth.entity.RefreshToken;
 import com.boki0.casino.auth.enums.AccountStatus;
 import com.boki0.casino.auth.enums.Role;
 import com.boki0.casino.auth.repository.AuthUserRepository;
@@ -78,6 +80,31 @@ public class AuthService {
         return new LoginResponse(
                 accessToken,
                 refreshToken,
+                "Bearer",
+                jwtService.getExpirationSeconds(),
+                userResponse
+        );
+    }
+
+    public LoginResponse refreshAccessToken(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(request.refreshToken());
+        AuthUser user = refreshToken.getUser();
+
+        if (user.getStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalArgumentException("Account is not active");
+        }
+
+        String accessToken = jwtService.generateAccessToken(user);
+        AuthUserResponse userResponse = new AuthUserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus()
+        );
+
+        return new LoginResponse(
+                accessToken,
+                request.refreshToken(),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
                 userResponse

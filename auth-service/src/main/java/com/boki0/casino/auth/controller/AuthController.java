@@ -4,6 +4,7 @@ import com.boki0.casino.auth.dto.AuthUserResponse;
 import com.boki0.casino.auth.dto.LoginRequest;
 import com.boki0.casino.auth.dto.LoginResponse;
 import com.boki0.casino.auth.dto.RegisterRequest;
+import com.boki0.casino.auth.dto.RefreshTokenRequest;
 import com.boki0.casino.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        LoginResponse response = authService.refreshAccessToken(request);
         return ResponseEntity.ok(response);
     }
 
