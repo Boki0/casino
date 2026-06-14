@@ -17,11 +17,18 @@ public class AuthService {
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(AuthUserRepository authUserRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(
+            AuthUserRepository authUserRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService
+    ) {
         this.authUserRepository = authUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public AuthUserResponse register(RegisterRequest request) {
@@ -60,6 +67,7 @@ public class AuthService {
         }
 
         String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
         AuthUserResponse userResponse = new AuthUserResponse(
                 user.getId(),
                 user.getEmail(),
@@ -69,6 +77,7 @@ public class AuthService {
 
         return new LoginResponse(
                 accessToken,
+                refreshToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
                 userResponse
