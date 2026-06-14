@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.List;
 
 @Service
 public class RefreshTokenService {
@@ -74,6 +75,12 @@ public class RefreshTokenService {
         refreshTokenRepository.save(refreshToken);
 
         return createRefreshToken(refreshToken.getUser());
+    }
+
+    public void revokeAllUserTokens(AuthUser user) {
+        List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(user);
+        activeTokens.forEach(refreshToken -> refreshToken.setRevoked(true));
+        refreshTokenRepository.saveAll(activeTokens);
     }
 
     public void revokeRefreshToken(String rawToken) {
