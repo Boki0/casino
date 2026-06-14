@@ -68,6 +68,14 @@ public class RefreshTokenService {
         return refreshToken;
     }
 
+    public String rotateRefreshToken(String rawToken) {
+        RefreshToken refreshToken = validateRefreshToken(rawToken);
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        return createRefreshToken(refreshToken.getUser());
+    }
+
     public void revokeRefreshToken(String rawToken) {
         RefreshToken refreshToken = validateRefreshToken(rawToken);
         refreshToken.setRevoked(true);

@@ -94,6 +94,7 @@ public class AuthService {
             throw new IllegalArgumentException("Account is not active");
         }
 
+        String newRefreshToken = refreshTokenService.rotateRefreshToken(request.refreshToken());
         String accessToken = jwtService.generateAccessToken(user);
         AuthUserResponse userResponse = new AuthUserResponse(
                 user.getId(),
@@ -104,7 +105,7 @@ public class AuthService {
 
         return new LoginResponse(
                 accessToken,
-                request.refreshToken(),
+                newRefreshToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
                 userResponse
