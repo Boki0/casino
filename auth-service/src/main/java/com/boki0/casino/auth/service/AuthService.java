@@ -112,6 +112,10 @@ public class AuthService {
         );
     }
 
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenService.revokeRefreshToken(request.refreshToken());
+    }
+
     public AuthUserResponse getCurrentUser(String email) {
         AuthUser user = authUserRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
