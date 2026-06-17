@@ -1,12 +1,14 @@
 package com.boki0.casino.user.service;
 
 import com.boki0.casino.user.dto.CreateUserProfileRequest;
+import com.boki0.casino.user.dto.UpdateUserProfileRequest;
 import com.boki0.casino.user.dto.UserProfileResponse;
 import com.boki0.casino.user.entity.UserProfile;
 import com.boki0.casino.user.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.UUID;
 
 @Service
 public class UserProfileService {
@@ -45,6 +47,33 @@ public class UserProfileService {
         UserProfile savedProfile = userProfileRepository.save(profile);
 
         return toResponse(savedProfile);
+    }
+
+    public UserProfileResponse getProfileByAuthUserId(UUID authUserId) {
+        UserProfile profile = getProfileOrThrow(authUserId);
+
+        return toResponse(profile);
+    }
+
+    public UserProfileResponse updateProfile(UUID authUserId, UpdateUserProfileRequest request) {
+        UserProfile profile = getProfileOrThrow(authUserId);
+
+        profile.setDisplayName(request.displayName());
+        profile.setFirstName(request.firstName());
+        profile.setLastName(request.lastName());
+        profile.setCountry(request.country());
+        profile.setPhoneNumber(request.phoneNumber());
+        profile.setDateOfBirth(request.dateOfBirth());
+        profile.setAvatarUrl(request.avatarUrl());
+
+        UserProfile savedProfile = userProfileRepository.save(profile);
+
+        return toResponse(savedProfile);
+    }
+
+    private UserProfile getProfileOrThrow(UUID authUserId) {
+        return userProfileRepository.findByAuthUserId(authUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User profile not found"));
     }
 
     private UserProfileResponse toResponse(UserProfile profile) {
