@@ -26,6 +26,18 @@ services:
     networks:
       - casino-network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: casino-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: casino_rabbit
+      RABBITMQ_DEFAULT_PASS: casino_rabbit_password
+    networks:
+      - casino-network
+
 volumes:
   casino_postgres_data:
 
