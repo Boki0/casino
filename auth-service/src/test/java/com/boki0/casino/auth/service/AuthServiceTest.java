@@ -8,7 +8,9 @@ import com.boki0.casino.auth.dto.RegisterRequest;
 import com.boki0.casino.auth.entity.AuthUser;
 import com.boki0.casino.auth.enums.AccountStatus;
 import com.boki0.casino.auth.enums.Role;
+import com.boki0.casino.auth.event.DomainEvent;
 import com.boki0.casino.auth.event.DomainEventPublisher;
+import com.boki0.casino.auth.event.UserRegisteredEvent;
 import com.boki0.casino.auth.repository.AuthUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +26,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -56,28 +60,40 @@ class AuthServiceTest {
     void register_shouldCreateUser_whenEmailIsNew() {
         String email = "player@example.com";
         String password = "password123";
+        String username = "player123";
         String passwordHash = "encoded-password";
-        RegisterRequest request = new RegisterRequest(email, password, "player123", null);
+        RegisterRequest request = new RegisterRequest(email, password, username, null);
+        UUID userId = UUID.randomUUID();
 
         when(authUserRepository.existsByEmail(email)).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn(passwordHash);
         when(authUserRepository.save(any(AuthUser.class))).thenAnswer(invocation -> {
             AuthUser user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
+            user.setId(userId);
             return user;
         });
 
         AuthUserResponse response = authService.register(request);
 
         ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
+        ArgumentCaptor<DomainEvent> eventCaptor = ArgumentCaptor.forClass(DomainEvent.class);
         verify(passwordEncoder).encode(password);
         verify(authUserRepository).save(userCaptor.capture());
+        verify(domainEventPublisher).publish(eventCaptor.capture());
 
         AuthUser savedUser = userCaptor.getValue();
+        UserRegisteredEvent event = assertInstanceOf(UserRegisteredEvent.class, eventCaptor.getValue());
         assertEquals(email, savedUser.getEmail());
         assertEquals(passwordHash, savedUser.getPasswordHash());
         assertEquals(Role.USER, savedUser.getRole());
         assertEquals(AccountStatus.ACTIVE, savedUser.getStatus());
+        assertNotNull(event.eventId());
+        assertEquals("USER_REGISTERED", event.eventType());
+        assertEquals(1, event.eventVersion());
+        assertEquals(userId, event.authUserId());
+        assertEquals(email, event.email());
+        assertEquals(username, event.username());
+        assertNotNull(event.occurredAt());
         assertEquals(email, response.email());
         assertEquals(Role.USER, response.role());
         assertEquals(AccountStatus.ACTIVE, response.status());
@@ -95,6 +111,7 @@ class AuthServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> authService.register(request));
         verify(authUserRepository, never()).save(any(AuthUser.class));
+        verify(domainEventPublisher, never()).publish(any(DomainEvent.class));
     }
 
     @Test
