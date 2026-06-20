@@ -8,6 +8,7 @@ import com.boki0.casino.auth.dto.RegisterRequest;
 import com.boki0.casino.auth.entity.AuthUser;
 import com.boki0.casino.auth.enums.AccountStatus;
 import com.boki0.casino.auth.enums.Role;
+import com.boki0.casino.auth.event.DomainEventPublisher;
 import com.boki0.casino.auth.repository.AuthUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,9 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private DomainEventPublisher domainEventPublisher;
+
     @InjectMocks
     private AuthService authService;
 
@@ -53,7 +57,7 @@ class AuthServiceTest {
         String email = "player@example.com";
         String password = "password123";
         String passwordHash = "encoded-password";
-        RegisterRequest request = new RegisterRequest(email, password, null);
+        RegisterRequest request = new RegisterRequest(email, password, "player123", null);
 
         when(authUserRepository.existsByEmail(email)).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn(passwordHash);
@@ -85,7 +89,7 @@ class AuthServiceTest {
     @Test
     void register_shouldThrowException_whenEmailAlreadyExists() {
         String email = "player@example.com";
-        RegisterRequest request = new RegisterRequest(email, "password123", null);
+        RegisterRequest request = new RegisterRequest(email, "password123", "player123", null);
 
         when(authUserRepository.existsByEmail(email)).thenReturn(true);
 

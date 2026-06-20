@@ -9,9 +9,14 @@ import com.boki0.casino.auth.entity.AuthUser;
 import com.boki0.casino.auth.entity.RefreshToken;
 import com.boki0.casino.auth.enums.AccountStatus;
 import com.boki0.casino.auth.enums.Role;
+import com.boki0.casino.auth.event.DomainEventPublisher;
+import com.boki0.casino.auth.event.UserRegisteredEvent;
 import com.boki0.casino.auth.repository.AuthUserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -20,17 +25,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final DomainEventPublisher domainEventPublisher;
 
     public AuthService(
             AuthUserRepository authUserRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            DomainEventPublisher domainEventPublisher
     ) {
         this.authUserRepository = authUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     public AuthUserResponse register(RegisterRequest request) {
@@ -47,6 +55,16 @@ public class AuthService {
         );
 
         AuthUser savedUser = authUserRepository.save(authUser);
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                UUID.randomUUID(),
+                "USER_REGISTERED",
+                1,
+                savedUser.getId(),
+                savedUser.getEmail(),
+                request.username(),
+                LocalDateTime.now()
+        );
+        domainEventPublisher.publish(event);
 
         return new AuthUserResponse(
                 savedUser.getId(),

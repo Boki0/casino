@@ -13,6 +13,10 @@ public record RegisterRequest(
         @Size(min = 8)
         String password,
 
+        @NotBlank
+        @Size(min = 3, max = 30)
+        String username,
+
         String promoCode
 ) {
 }
