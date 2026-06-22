@@ -1,8 +1,15 @@
+import Footer from './components/layout/Footer'
+import Header from './components/layout/Header'
+
 function App() {
   return (
-    <main className="app">
-      <h1>Casino Platform</h1>
-    </main>
+    <>
+      <Header />
+      <main className="app-main">
+        <p>Frontend structure is ready.</p>
+      </main>
+      <Footer />
+    </>
   )
 }
 
