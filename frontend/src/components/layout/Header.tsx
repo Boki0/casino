@@ -1,4 +1,10 @@
-function Header() {
+import './Header.css'
+
+type HeaderProps = {
+  onLoginClick: () => void
+}
+
+function Header({ onLoginClick }: HeaderProps) {
   return (
     <header className="app-header">
       <div className="app-header__container">
@@ -20,7 +26,7 @@ function Header() {
         </nav>
 
         <div className="app-header__actions">
-          <button className="app-header__login" type="button">
+          <button className="app-header__login" type="button" onClick={onLoginClick}>
             Log In
           </button>
           <button className="app-header__register" type="button">

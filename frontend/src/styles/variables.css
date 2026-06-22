@@ -1,0 +1,19 @@
+:root {
+  --color-bg: #080e1f;
+  --color-header: #111629;
+  --color-surface: #171d34;
+  --color-surface-light: #222944;
+  --color-text: #ffffff;
+  --color-text-muted: #9aa2c7;
+  --color-primary: #01ff80;
+  --color-primary-hover: #00df70;
+  --color-border: #29304a;
+
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
