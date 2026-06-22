@@ -4,7 +4,10 @@ import com.boki0.casino.user.dto.CreateUserProfileRequest;
 import com.boki0.casino.user.dto.UpdateUserProfileRequest;
 import com.boki0.casino.user.dto.UserProfileResponse;
 import com.boki0.casino.user.entity.UserProfile;
+import com.boki0.casino.user.event.UserRegisteredEvent;
 import com.boki0.casino.user.repository.UserProfileRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -13,6 +16,7 @@ import java.util.UUID;
 @Service
 public class UserProfileService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserProfileService.class);
     private static final String REF_CODE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int REF_CODE_LENGTH = 8;
 
@@ -37,16 +41,28 @@ public class UserProfileService {
             throw new IllegalArgumentException("Username is already used");
         }
 
-        String refCode = generateRefCode();
-        UserProfile profile = new UserProfile(
+        UserProfile savedProfile = createAndSaveProfile(
                 request.authUserId(),
                 request.email(),
-                request.username(),
-                refCode
+                request.username()
         );
-        UserProfile savedProfile = userProfileRepository.save(profile);
 
         return toResponse(savedProfile);
+    }
+
+    public UserProfileResponse createProfileFromUserRegisteredEvent(UserRegisteredEvent event) {
+        validateUserRegisteredEvent(event);
+
+        return userProfileRepository.findByAuthUserId(event.authUserId())
+                .map(existingProfile -> {
+                    LOGGER.info(
+                            "User profile already exists for UserRegisteredEvent eventId={}, authUserId={}",
+                            event.eventId(),
+                            event.authUserId()
+                    );
+                    return toResponse(existingProfile);
+                })
+                .orElseGet(() -> createProfileFromNewUserRegisteredEvent(event));
     }
 
     public UserProfileResponse getProfileByAuthUserId(UUID authUserId) {
@@ -74,6 +90,59 @@ public class UserProfileService {
     private UserProfile getProfileOrThrow(UUID authUserId) {
         return userProfileRepository.findByAuthUserId(authUserId)
                 .orElseThrow(() -> new IllegalArgumentException("User profile not found"));
+    }
+
+    private UserProfileResponse createProfileFromNewUserRegisteredEvent(UserRegisteredEvent event) {
+        if (userProfileRepository.existsByEmail(event.email())) {
+            throw new IllegalArgumentException("Email is already used by another user profile");
+        }
+
+        if (userProfileRepository.existsByUsername(event.username())) {
+            throw new IllegalArgumentException("Username is already used by another user profile");
+        }
+
+        UserProfile savedProfile = createAndSaveProfile(
+                event.authUserId(),
+                event.email(),
+                event.username()
+        );
+        LOGGER.info(
+                "User profile created from UserRegisteredEvent eventId={}, authUserId={}",
+                event.eventId(),
+                event.authUserId()
+        );
+
+        return toResponse(savedProfile);
+    }
+
+    private void validateUserRegisteredEvent(UserRegisteredEvent event) {
+        if (event == null) {
+            throw new IllegalArgumentException("UserRegisteredEvent must not be null");
+        }
+
+        if (event.authUserId() == null) {
+            throw new IllegalArgumentException("UserRegisteredEvent authUserId must not be null");
+        }
+
+        if (event.email() == null || event.email().isBlank()) {
+            throw new IllegalArgumentException("UserRegisteredEvent email must not be blank");
+        }
+
+        if (event.username() == null || event.username().isBlank()) {
+            throw new IllegalArgumentException("UserRegisteredEvent username must not be blank");
+        }
+    }
+
+    private UserProfile createAndSaveProfile(UUID authUserId, String email, String username) {
+        String refCode = generateRefCode();
+        UserProfile profile = new UserProfile(
+                authUserId,
+                email,
+                username,
+                refCode
+        );
+
+        return userProfileRepository.save(profile);
     }
 
     private UserProfileResponse toResponse(UserProfile profile) {
