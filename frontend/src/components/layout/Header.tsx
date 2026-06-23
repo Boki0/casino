@@ -2,9 +2,10 @@ import './Header.css'
 
 type HeaderProps = {
   onLoginClick: () => void
+  onRegisterClick: () => void
 }
 
-function Header({ onLoginClick }: HeaderProps) {
+function Header({ onLoginClick, onRegisterClick }: HeaderProps) {
   return (
     <header className="app-header">
       <div className="app-header__container">
@@ -29,7 +30,7 @@ function Header({ onLoginClick }: HeaderProps) {
           <button className="app-header__login" type="button" onClick={onLoginClick}>
             Log In
           </button>
-          <button className="app-header__register" type="button">
+          <button className="app-header__register" type="button" onClick={onRegisterClick}>
             Register
           </button>
         </div>

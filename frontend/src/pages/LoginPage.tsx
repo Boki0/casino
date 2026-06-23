@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import './LoginPage.css'
 
 function LoginPage() {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+
   return (
     <section className="login-page" id="login">
       <div className="login-card">
@@ -34,7 +37,19 @@ function LoginPage() {
 
             <label className="login-form__field">
               <span>Password</span>
-              <input type="password" placeholder="Enter Password" />
+              <div className="login-form__password-control">
+                <input
+                  type={isPasswordVisible ? 'text' : 'password'}
+                  placeholder="Enter Password"
+                />
+                <button
+                  className="login-form__password-toggle"
+                  type="button"
+                  onClick={() => setIsPasswordVisible((isVisible) => !isVisible)}
+                >
+                  {isPasswordVisible ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </label>
 
             <button className="login-form__submit" type="button">

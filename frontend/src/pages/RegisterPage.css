@@ -1,0 +1,89 @@
+.register-card {
+  min-height: 700px;
+}
+
+.register-card__visual {
+  min-height: 700px;
+  background:
+    radial-gradient(circle at 26% 22%, rgba(1, 255, 128, 0.2), transparent 30%),
+    radial-gradient(circle at 72% 76%, rgba(1, 255, 128, 0.12), transparent 28%),
+    linear-gradient(145deg, #07111d 0%, #111629 50%, #0a1025 100%);
+}
+
+.register-card__form-panel {
+  min-height: 700px;
+  padding: 44px 56px;
+}
+
+.register-form__header {
+  margin-bottom: 24px;
+}
+
+.register-form__field {
+  margin-bottom: 16px;
+}
+
+.register-form__optional {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.register-form__agreement {
+  margin: 6px 0 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.register-form__checkbox {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  color: var(--color-bg);
+  background: var(--color-primary);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.register-form__submit {
+  margin-top: 0;
+}
+
+.register-form__divider {
+  margin-top: 24px;
+}
+
+@media (max-width: 840px) {
+  .register-card {
+    min-height: 0;
+  }
+
+  .register-card__visual {
+    min-height: 280px;
+  }
+
+  .register-card__form-panel {
+    min-height: 0;
+    padding: 36px;
+  }
+}
+
+@media (max-width: 520px) {
+  .register-card__visual {
+    min-height: 240px;
+  }
+
+  .register-card__form-panel {
+    padding: 26px;
+  }
+
+  .register-form__agreement {
+    font-size: 13px;
+  }
+}
