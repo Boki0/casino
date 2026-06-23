@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: casino-postgres
+    environment:
+      POSTGRES_USER: casino_user
+      POSTGRES_PASSWORD: casino_password
+      POSTGRES_DB: casino_platform
+    ports:
+      - "5433:5432"
+    volumes:
+      - casino_postgres_data:/var/lib/postgresql/data
+    networks:
+      - casino-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: casino-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin_casino!
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - casino-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: casino-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: casino_rabbit
+      RABBITMQ_DEFAULT_PASS: casino_rabbit_password
+    networks:
+      - casino-network
+
+volumes:
+  casino_postgres_data:
+
+networks:
+  casino-network:
+    driver: bridge
