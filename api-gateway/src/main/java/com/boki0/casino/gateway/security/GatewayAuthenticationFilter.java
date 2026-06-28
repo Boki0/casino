@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +27,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     private static final String HEADER_AUTH_USER_ID = "X-Auth-User-Id";
     private static final String HEADER_AUTH_USER_ROLE = "X-Auth-User-Role";
     private static final String HEADER_AUTH_USER_EMAIL = "X-Auth-User-Email";
+    private static final String HEADER_INTERNAL_GATEWAY_SECRET = "X-Internal-Gateway-Secret";
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/auth/register",
@@ -35,9 +37,14 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     );
 
     private final JwtService jwtService;
+    private final String internalGatewaySecret;
 
-    public GatewayAuthenticationFilter(JwtService jwtService) {
+    public GatewayAuthenticationFilter(
+            JwtService jwtService,
+            @Value("${internal.gateway.secret}") String internalGatewaySecret
+    ) {
         this.jwtService = jwtService;
+        this.internalGatewaySecret = internalGatewaySecret;
     }
 
     @Override
@@ -72,6 +79,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
 
             ServerHttpRequest authenticatedRequest = sanitizedRequest.mutate()
                     .header(HEADER_AUTH_USER_ID, authenticatedUser.authUserId())
+                    .header(HEADER_INTERNAL_GATEWAY_SECRET, internalGatewaySecret)
                     .headers(headers -> {
                         if (authenticatedUser.role() != null && !authenticatedUser.role().isBlank()) {
                             headers.set(HEADER_AUTH_USER_ROLE, authenticatedUser.role());
@@ -106,6 +114,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
                     headers.remove(HEADER_AUTH_USER_ID);
                     headers.remove(HEADER_AUTH_USER_ROLE);
                     headers.remove(HEADER_AUTH_USER_EMAIL);
+                    headers.remove(HEADER_INTERNAL_GATEWAY_SECRET);
                 })
                 .build();
     }
