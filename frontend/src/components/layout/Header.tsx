@@ -1,18 +1,14 @@
+import { Link, NavLink } from 'react-router-dom'
 import './Header.css'
 
-type HeaderProps = {
-  onLoginClick: () => void
-  onRegisterClick: () => void
-}
-
-function Header({ onLoginClick, onRegisterClick }: HeaderProps) {
+function Header() {
   return (
     <header className="app-header">
       <div className="app-header__container">
-        <div className="app-header__brand">
+        <Link className="app-header__brand" to="/">
           <div className="app-header__logo">♠</div>
           <span className="app-header__title">Casino Platform</span>
-        </div>
+        </Link>
 
         <nav className="app-header__nav" aria-label="Main navigation">
           <a className="app-header__link" href="#">
@@ -27,12 +23,12 @@ function Header({ onLoginClick, onRegisterClick }: HeaderProps) {
         </nav>
 
         <div className="app-header__actions">
-          <button className="app-header__login" type="button" onClick={onLoginClick}>
+          <NavLink className="app-header__login" to="/login">
             Log In
-          </button>
-          <button className="app-header__register" type="button" onClick={onRegisterClick}>
+          </NavLink>
+          <NavLink className="app-header__register" to="/register">
             Register
-          </button>
+          </NavLink>
         </div>
       </div>
     </header>

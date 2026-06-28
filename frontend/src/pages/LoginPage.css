@@ -228,9 +228,13 @@
 }
 
 .login-form__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text);
   background: transparent;
   border: 1px solid var(--color-border);
+  text-decoration: none;
 }
 
 .login-form__secondary:hover {

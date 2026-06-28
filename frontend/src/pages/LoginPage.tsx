@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import './LoginPage.css'
 
 function LoginPage() {
@@ -60,9 +61,9 @@ function LoginPage() {
               <span>Don't have an account yet?</span>
             </div>
 
-            <button className="login-form__secondary" type="button">
+            <Link className="login-form__secondary" to="/register">
               Register
-            </button>
+            </Link>
           </form>
         </div>
       </div>
