@@ -1,9 +1,12 @@
 package com.boki0.casino.payment;
 
+import com.boki0.casino.payment.config.StripeProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(StripeProperties.class)
 public class PaymentServiceApplication {
 
     public static void main(String[] args) {
