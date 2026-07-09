@@ -69,6 +69,7 @@ echo "api-gateway: http://localhost:8080"
 echo "auth-service: http://localhost:8081"
 echo "user-service: http://localhost:8082"
 echo "wallet-service: http://localhost:8083"
+echo "payment-service: http://localhost:8085"
 echo "RabbitMQ UI: http://localhost:15672"
 echo "pgAdmin: http://localhost:5050"
 echo ""
@@ -87,5 +88,7 @@ tell application "Terminal"
     do script "printf '\\\\033]0;user-service\\\\007'; cd '$ROOT_DIR/user-service' && echo 'Starting user-service on port 8082...' && ./mvnw spring-boot:run"
 
     do script "printf '\\\\033]0;wallet-service\\\\007'; cd '$ROOT_DIR/wallet-service' && echo 'Starting wallet-service on port 8083...' && ./mvnw spring-boot:run"
+
+    do script "printf '\\\\033]0;payment-service\\\\007'; cd '$ROOT_DIR/payment-service' && echo 'Starting payment-service...' && ./mvnw spring-boot:run"
 end tell
 EOF
