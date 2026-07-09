@@ -16,7 +16,9 @@ public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "casino.events";
     public static final String QUEUE_USER_REGISTERED = "wallet-service.user-registered.queue";
+    public static final String QUEUE_PAYMENT_DEPOSIT_COMPLETED = "wallet-service.payment-deposit-completed.queue";
     public static final String ROUTING_KEY_USER_REGISTERED = "user.registered";
+    public static final String ROUTING_KEY_PAYMENT_DEPOSIT_COMPLETED = "payment.deposit.completed";
 
     @Bean
     public TopicExchange casinoEventsExchange() {
@@ -29,6 +31,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue paymentDepositCompletedQueue() {
+        return new Queue(QUEUE_PAYMENT_DEPOSIT_COMPLETED);
+    }
+
+    @Bean
     public Binding userRegisteredBinding(
             Queue userRegisteredQueue,
             TopicExchange casinoEventsExchange
@@ -36,6 +43,16 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(userRegisteredQueue)
                 .to(casinoEventsExchange)
                 .with(ROUTING_KEY_USER_REGISTERED);
+    }
+
+    @Bean
+    public Binding paymentDepositCompletedBinding(
+            Queue paymentDepositCompletedQueue,
+            TopicExchange casinoEventsExchange
+    ) {
+        return BindingBuilder.bind(paymentDepositCompletedQueue)
+                .to(casinoEventsExchange)
+                .with(ROUTING_KEY_PAYMENT_DEPOSIT_COMPLETED);
     }
 
     @Bean
