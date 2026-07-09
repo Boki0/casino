@@ -5,6 +5,8 @@ import com.boki0.casino.payment.dto.DepositResponse;
 import com.boki0.casino.payment.entity.DepositOrder;
 import com.boki0.casino.payment.entity.DepositStatus;
 import com.boki0.casino.payment.entity.PaymentProviderType;
+import com.boki0.casino.payment.event.DomainEventPublisher;
+import com.boki0.casino.payment.event.PaymentDepositCompletedEvent;
 import com.boki0.casino.payment.exception.PaymentAccessDeniedException;
 import com.boki0.casino.payment.exception.PaymentResourceNotFoundException;
 import com.boki0.casino.payment.provider.CreateCheckoutCommand;
@@ -12,6 +14,7 @@ import com.boki0.casino.payment.provider.CreateCheckoutResult;
 import com.boki0.casino.payment.provider.PaymentProvider;
 import com.boki0.casino.payment.provider.PaymentProviderRegistry;
 import com.boki0.casino.payment.repository.DepositOrderRepository;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.UUID;
@@ -23,13 +26,16 @@ public class DepositService {
 
     private final DepositOrderRepository depositOrderRepository;
     private final PaymentProviderRegistry paymentProviderRegistry;
+    private final DomainEventPublisher domainEventPublisher;
 
     public DepositService(
             DepositOrderRepository depositOrderRepository,
-            PaymentProviderRegistry paymentProviderRegistry
+            PaymentProviderRegistry paymentProviderRegistry,
+            DomainEventPublisher domainEventPublisher
     ) {
         this.depositOrderRepository = depositOrderRepository;
         this.paymentProviderRegistry = paymentProviderRegistry;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Transactional
@@ -79,6 +85,7 @@ public class DepositService {
         depositOrder.setCompletedAt(LocalDateTime.now());
 
         DepositOrder savedDepositOrder = depositOrderRepository.save(depositOrder);
+        domainEventPublisher.publish(toPaymentDepositCompletedEvent(savedDepositOrder));
 
         return toDepositResponse(savedDepositOrder);
     }
@@ -116,6 +123,21 @@ public class DepositService {
         DepositOrder updatedDepositOrder = depositOrderRepository.save(savedDepositOrder);
 
         return toDepositResponse(updatedDepositOrder);
+    }
+
+    private PaymentDepositCompletedEvent toPaymentDepositCompletedEvent(DepositOrder depositOrder) {
+        return new PaymentDepositCompletedEvent(
+                UUID.randomUUID(),
+                PaymentDepositCompletedEvent.EVENT_TYPE,
+                PaymentDepositCompletedEvent.EVENT_VERSION,
+                depositOrder.getId(),
+                depositOrder.getAuthUserId(),
+                depositOrder.getAmount(),
+                depositOrder.getCurrency(),
+                depositOrder.getCreditsAmount(),
+                depositOrder.getProvider(),
+                Instant.now()
+        );
     }
 
     private DepositResponse toDepositResponse(DepositOrder depositOrder) {
