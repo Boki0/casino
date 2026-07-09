@@ -15,6 +15,7 @@ public class GatewayInternalAuthFilter extends OncePerRequestFilter {
     private static final String HEADER_INTERNAL_GATEWAY_SECRET = "X-Internal-Gateway-Secret";
     private static final String PROTECTED_PAYMENTS_PATH = "/payments";
     private static final String PROTECTED_PAYMENTS_PATH_PREFIX = "/payments/";
+    private static final String STRIPE_WEBHOOK_PATH = "/payments/webhooks/stripe";
 
     private final String internalGatewaySecret;
 
@@ -28,7 +29,7 @@ public class GatewayInternalAuthFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        if (!isProtectedPaymentsPath(request)) {
+        if (!isProtectedPaymentsPath(request) || isStripeWebhookPath(request)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,5 +48,9 @@ public class GatewayInternalAuthFilter extends OncePerRequestFilter {
     private boolean isProtectedPaymentsPath(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         return requestUri.equals(PROTECTED_PAYMENTS_PATH) || requestUri.startsWith(PROTECTED_PAYMENTS_PATH_PREFIX);
+    }
+
+    private boolean isStripeWebhookPath(HttpServletRequest request) {
+        return STRIPE_WEBHOOK_PATH.equals(request.getRequestURI());
     }
 }

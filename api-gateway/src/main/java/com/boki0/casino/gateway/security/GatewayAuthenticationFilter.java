@@ -33,7 +33,8 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/register",
             "/api/auth/login",
             "/api/auth/refresh",
-            "/api/auth/logout"
+            "/api/auth/logout",
+            "/api/payments/webhooks/stripe"
     );
 
     private final JwtService jwtService;
