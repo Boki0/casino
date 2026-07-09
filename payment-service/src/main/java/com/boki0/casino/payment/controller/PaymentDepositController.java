@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -36,6 +37,17 @@ public class PaymentDepositController {
         return ResponseEntity
                 .created(URI.create("/payments/deposits/" + response.depositId()))
                 .body(response);
+    }
+
+    @PostMapping("/{depositId}/complete-manual")
+    public ResponseEntity<DepositResponse> completeManualDeposit(
+            @RequestHeader(value = HEADER_AUTH_USER_ID, required = false) String authUserIdHeader,
+            @PathVariable UUID depositId
+    ) {
+        UUID authUserId = parseAuthUserId(authUserIdHeader);
+        DepositResponse response = depositService.completeManualDeposit(authUserId, depositId);
+
+        return ResponseEntity.ok(response);
     }
 
     private UUID parseAuthUserId(String authUserIdHeader) {

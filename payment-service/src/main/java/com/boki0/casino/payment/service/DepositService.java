@@ -4,11 +4,15 @@ import com.boki0.casino.payment.dto.CreateDepositRequest;
 import com.boki0.casino.payment.dto.DepositResponse;
 import com.boki0.casino.payment.entity.DepositOrder;
 import com.boki0.casino.payment.entity.DepositStatus;
+import com.boki0.casino.payment.entity.PaymentProviderType;
+import com.boki0.casino.payment.exception.PaymentAccessDeniedException;
+import com.boki0.casino.payment.exception.PaymentResourceNotFoundException;
 import com.boki0.casino.payment.provider.CreateCheckoutCommand;
 import com.boki0.casino.payment.provider.CreateCheckoutResult;
 import com.boki0.casino.payment.provider.PaymentProvider;
 import com.boki0.casino.payment.provider.PaymentProviderRegistry;
 import com.boki0.casino.payment.repository.DepositOrderRepository;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -37,6 +41,46 @@ public class DepositService {
         return depositOrderRepository.findByIdempotencyKey(request.idempotencyKey())
                 .map(this::toDepositResponse)
                 .orElseGet(() -> createNewDeposit(authUserId, request));
+    }
+
+    @Transactional
+    public DepositResponse completeManualDeposit(UUID authUserId, UUID depositId) {
+        if (authUserId == null) {
+            throw new IllegalArgumentException("authUserId must not be null");
+        }
+        if (depositId == null) {
+            throw new IllegalArgumentException("depositId must not be null");
+        }
+
+        DepositOrder depositOrder = depositOrderRepository.findById(depositId)
+                .orElseThrow(() -> new PaymentResourceNotFoundException(
+                        "Deposit order not found: " + depositId
+                ));
+
+        if (!depositOrder.getAuthUserId().equals(authUserId)) {
+            throw new PaymentAccessDeniedException("Deposit order does not belong to authenticated user");
+        }
+
+        if (depositOrder.getProvider() != PaymentProviderType.MANUAL) {
+            throw new IllegalArgumentException("Only MANUAL deposit orders can be completed manually");
+        }
+
+        if (depositOrder.getStatus() == DepositStatus.COMPLETED) {
+            return toDepositResponse(depositOrder);
+        }
+
+        if (depositOrder.getStatus() != DepositStatus.PENDING) {
+            throw new IllegalArgumentException(
+                    "Only PENDING deposit orders can be completed manually"
+            );
+        }
+
+        depositOrder.setStatus(DepositStatus.COMPLETED);
+        depositOrder.setCompletedAt(LocalDateTime.now());
+
+        DepositOrder savedDepositOrder = depositOrderRepository.save(depositOrder);
+
+        return toDepositResponse(savedDepositOrder);
     }
 
     private DepositResponse createNewDeposit(UUID authUserId, CreateDepositRequest request) {
