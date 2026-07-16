@@ -8,6 +8,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -25,12 +28,12 @@ import java.util.UUID;
                 @UniqueConstraint(name = "uk_games_slug", columnNames = "slug"),
                 @UniqueConstraint(
                         name = "uk_games_provider_game_id",
-                        columnNames = {"provider", "provider_game_id"}
+                        columnNames = {"provider_id", "provider_game_id"}
                 )
         },
         indexes = {
                 @Index(name = "idx_games_slug", columnList = "slug"),
-                @Index(name = "idx_games_provider", columnList = "provider"),
+                @Index(name = "idx_games_provider_id", columnList = "provider_id"),
                 @Index(name = "idx_games_category", columnList = "category"),
                 @Index(name = "idx_games_enabled", columnList = "enabled")
         }
@@ -48,8 +51,8 @@ public class Game {
     @Column(name = "slug", nullable = false, unique = true, length = 150)
     private String slug;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false, length = 64)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "provider_id", nullable = false)
     private GameProvider provider;
 
     @Column(name = "provider_game_id", nullable = false, length = 200)

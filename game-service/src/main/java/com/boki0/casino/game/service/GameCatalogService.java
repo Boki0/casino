@@ -56,7 +56,7 @@ public class GameCatalogService {
                 game.getId(),
                 game.getName(),
                 game.getSlug(),
-                game.getProvider(),
+                game.getProvider().getCode(),
                 game.getCategory(),
                 game.getThumbnailUrl()
         );
