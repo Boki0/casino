@@ -6,6 +6,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FRESH_START=false
 STRIPE_LISTEN_LOG="/tmp/casino-stripe-listen.log"
 PAYMENT_ENV_FILE="/tmp/casino-payment-service-env.sh"
+NOTIFICATION_ENV_FILE="/tmp/casino-notification-service-env.sh"
 
 usage() {
     echo "Usage: ./scripts/start-dev.sh [--fresh]"
@@ -58,6 +59,19 @@ shell_quote() {
     printf "%q" "$1"
 }
 
+is_local_env_key() {
+    case "$1" in
+        STRIPE_SECRET_KEY|STRIPE_SUCCESS_URL|STRIPE_CANCEL_URL|\
+        MAIL_HOST|MAIL_PORT|MAIL_USERNAME|MAIL_PASSWORD|MAIL_FROM|\
+        MAIL_SMTP_AUTH|MAIL_SMTP_STARTTLS_ENABLE|MAIL_SMTP_STARTTLS_REQUIRED)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 load_local_env() {
     local env_file="$ROOT_DIR/.env"
 
@@ -69,19 +83,33 @@ load_local_env() {
     echo "Note: .env is local only and must not be committed."
 
     while IFS= read -r line || [ -n "$line" ]; do
+        local key
+        local value
+
         case "$line" in
             ""|\#*)
                 continue
                 ;;
-            STRIPE_SECRET_KEY=*)
-                STRIPE_SECRET_KEY="${line#STRIPE_SECRET_KEY=}"
-                STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY%\"}"
-                STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY#\"}"
-                STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY%\'}"
-                STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY#\'}"
-                export STRIPE_SECRET_KEY
-                ;;
         esac
+
+        line="${line#export }"
+        key="${line%%=*}"
+        value="${line#*=}"
+
+        if [ "$key" = "$line" ]; then
+            continue
+        fi
+
+        if ! is_local_env_key "$key"; then
+            continue
+        fi
+
+        value="${value%\"}"
+        value="${value#\"}"
+        value="${value%\'}"
+        value="${value#\'}"
+
+        export "$key=$value"
     done < "$env_file"
 }
 
@@ -139,17 +167,42 @@ write_payment_env_file() {
     # STRIPE_WEBHOOK_SECRET is captured from Stripe CLI output.
     # These secrets are written only to a temporary local file for the payment-service terminal.
     # Do not commit real Stripe secrets.
-    if [ -n "${STRIPE_SECRET_KEY:-}" ]; then
-        printf "export STRIPE_SECRET_KEY=%s\n" "$(shell_quote "$STRIPE_SECRET_KEY")" >> "$PAYMENT_ENV_FILE"
-    fi
-    if [ -n "${STRIPE_WEBHOOK_SECRET:-}" ]; then
-        printf "export STRIPE_WEBHOOK_SECRET=%s\n" "$(shell_quote "$STRIPE_WEBHOOK_SECRET")" >> "$PAYMENT_ENV_FILE"
+    write_env_var "$PAYMENT_ENV_FILE" STRIPE_SECRET_KEY
+    write_env_var "$PAYMENT_ENV_FILE" STRIPE_SUCCESS_URL
+    write_env_var "$PAYMENT_ENV_FILE" STRIPE_CANCEL_URL
+    write_env_var "$PAYMENT_ENV_FILE" STRIPE_WEBHOOK_SECRET
+}
+
+write_notification_env_file() {
+    : > "$NOTIFICATION_ENV_FILE"
+    chmod 600 "$NOTIFICATION_ENV_FILE"
+
+    # Notification email values come from local .env or the shell environment.
+    # These secrets are written only to a temporary local file for the notification-service terminal.
+    # Do not commit real SMTP secrets.
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_HOST
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_PORT
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_USERNAME
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_PASSWORD
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_FROM
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_SMTP_AUTH
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_SMTP_STARTTLS_ENABLE
+    write_env_var "$NOTIFICATION_ENV_FILE" MAIL_SMTP_STARTTLS_REQUIRED
+}
+
+write_env_var() {
+    local output_file="$1"
+    local name="$2"
+
+    if [ "${!name+x}" = "x" ]; then
+        printf "export %s=%s\n" "$name" "$(shell_quote "${!name}")" >> "$output_file"
     fi
 }
 
 load_local_env
 start_stripe_cli
 write_payment_env_file
+write_notification_env_file
 
 echo "Starting Docker infrastructure..."
 cd "$ROOT_DIR"
@@ -177,6 +230,7 @@ docker compose ps
 
 ROOT_DIR_QUOTED="$(shell_quote "$ROOT_DIR")"
 PAYMENT_ENV_FILE_QUOTED="$(shell_quote "$PAYMENT_ENV_FILE")"
+NOTIFICATION_ENV_FILE_QUOTED="$(shell_quote "$NOTIFICATION_ENV_FILE")"
 
 osascript <<EOF
 tell application "Terminal"
@@ -194,6 +248,6 @@ tell application "Terminal"
 
     do script "printf '\\\\033]0;payment-service\\\\007'; . $PAYMENT_ENV_FILE_QUOTED && rm -f $PAYMENT_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/payment-service && echo 'Starting payment-service...' && ./mvnw spring-boot:run"
 
-    do script "printf '\\\\033]0;notification-service\\\\007'; cd $ROOT_DIR_QUOTED/notification-service && echo 'Starting notification-service...' && ./mvnw spring-boot:run"
+    do script "printf '\\\\033]0;notification-service\\\\007'; . $NOTIFICATION_ENV_FILE_QUOTED && rm -f $NOTIFICATION_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/notification-service && echo 'Starting notification-service...' && ./mvnw spring-boot:run"
 end tell
 EOF
