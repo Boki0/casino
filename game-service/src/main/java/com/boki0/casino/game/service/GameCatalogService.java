@@ -6,8 +6,11 @@ import com.boki0.casino.game.exception.GameNotFoundException;
 import com.boki0.casino.game.repository.GameRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -20,7 +23,7 @@ public class GameCatalogService {
     }
 
     public List<GameResponse> getEnabledGames() {
-        return gameRepository.findAllByEnabledTrueOrderByNameAsc()
+        return gameRepository.findAllByEnabledTrueAndProviderAvailableTrueOrderByNameAsc()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -31,8 +34,7 @@ public class GameCatalogService {
             throw new IllegalArgumentException("Game id must not be null");
         }
 
-        Game game = gameRepository.findById(id)
-                .filter(Game::isEnabled)
+        Game game = gameRepository.findByIdAndEnabledTrueAndProviderAvailableTrue(id)
                 .orElseThrow(() -> GameNotFoundException.byId(id));
 
         return toResponse(game);
@@ -44,8 +46,7 @@ public class GameCatalogService {
         }
 
         String normalizedSlug = slug.trim().toLowerCase(Locale.ROOT);
-        Game game = gameRepository.findBySlug(normalizedSlug)
-                .filter(Game::isEnabled)
+        Game game = gameRepository.findBySlugAndEnabledTrueAndProviderAvailableTrue(normalizedSlug)
                 .orElseThrow(() -> GameNotFoundException.bySlug(normalizedSlug));
 
         return toResponse(game);
@@ -58,7 +59,15 @@ public class GameCatalogService {
                 game.getSlug(),
                 game.getProvider().getCode(),
                 game.getCategory(),
-                game.getThumbnailUrl()
+                game.getThumbnailUrl(),
+                copySet(game.getSupportedCurrencies()),
+                copySet(game.getSupportedPlatforms()),
+                game.getMinBet(),
+                game.getMaxBet()
         );
+    }
+
+    private <T> Set<T> copySet(Set<T> values) {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(values));
     }
 }

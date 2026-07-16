@@ -17,6 +17,12 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
 
     Optional<Game> findByProviderAndProviderGameId(GameProvider provider, String providerGameId);
 
+    Optional<Game> findByIdAndEnabledTrueAndProviderAvailableTrue(UUID id);
+
+    Optional<Game> findBySlugAndEnabledTrueAndProviderAvailableTrue(String slug);
+
+    List<Game> findAllByEnabledTrueAndProviderAvailableTrueOrderByNameAsc();
+
     List<Game> findAllByEnabledTrueOrderByNameAsc();
 
     List<Game> findAllByCategoryAndEnabledTrueOrderByNameAsc(GameCategory category);

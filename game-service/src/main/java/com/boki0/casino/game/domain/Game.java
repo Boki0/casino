@@ -1,6 +1,8 @@
 package com.boki0.casino.game.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,9 +18,13 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -68,6 +74,32 @@ public class Game {
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "provider_available", nullable = false)
+    private boolean providerAvailable = true;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "game_supported_currencies",
+            joinColumns = @JoinColumn(name = "game_id")
+    )
+    @Column(name = "currency_code", nullable = false, length = 10)
+    private Set<String> supportedCurrencies = new LinkedHashSet<>();
+
+    @ElementCollection
+    @CollectionTable(
+            name = "game_supported_platforms",
+            joinColumns = @JoinColumn(name = "game_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "platform", nullable = false, length = 32)
+    private Set<GamePlatform> supportedPlatforms = new LinkedHashSet<>();
+
+    @Column(name = "min_bet", nullable = false, precision = 19, scale = 4)
+    private BigDecimal minBet;
+
+    @Column(name = "max_bet", nullable = false, precision = 19, scale = 4)
+    private BigDecimal maxBet;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -83,7 +115,11 @@ public class Game {
             GameProvider provider,
             String providerGameId,
             GameCategory category,
-            String thumbnailUrl
+            String thumbnailUrl,
+            Set<String> supportedCurrencies,
+            Set<GamePlatform> supportedPlatforms,
+            BigDecimal minBet,
+            BigDecimal maxBet
     ) {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.slug = normalizeSlug(Objects.requireNonNull(slug, "slug must not be null"));
@@ -91,6 +127,11 @@ public class Game {
         this.providerGameId = Objects.requireNonNull(providerGameId, "providerGameId must not be null");
         this.category = Objects.requireNonNull(category, "category must not be null");
         this.thumbnailUrl = thumbnailUrl;
+        this.supportedCurrencies = normalizeCurrencies(supportedCurrencies);
+        this.supportedPlatforms = normalizePlatforms(supportedPlatforms);
+        validateBetRange(minBet, maxBet);
+        this.minBet = minBet;
+        this.maxBet = maxBet;
     }
 
     @PrePersist
@@ -107,6 +148,70 @@ public class Game {
 
     private String normalizeSlug(String slug) {
         return slug.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private Set<String> normalizeCurrencies(Set<String> supportedCurrencies) {
+        Objects.requireNonNull(supportedCurrencies, "supportedCurrencies must not be null");
+
+        Set<String> normalizedCurrencies = new LinkedHashSet<>();
+        for (String currency : supportedCurrencies) {
+            String normalizedCurrency = Objects.requireNonNull(currency, "currency code must not be null")
+                    .trim()
+                    .toUpperCase(Locale.ROOT);
+            if (normalizedCurrency.isBlank()) {
+                throw new IllegalArgumentException("currency code must not be blank");
+            }
+            normalizedCurrencies.add(normalizedCurrency);
+        }
+
+        return normalizedCurrencies;
+    }
+
+    private Set<GamePlatform> normalizePlatforms(Set<GamePlatform> supportedPlatforms) {
+        Objects.requireNonNull(supportedPlatforms, "supportedPlatforms must not be null");
+
+        Set<GamePlatform> normalizedPlatforms = new LinkedHashSet<>();
+        for (GamePlatform platform : supportedPlatforms) {
+            normalizedPlatforms.add(Objects.requireNonNull(platform, "platform must not be null"));
+        }
+
+        return normalizedPlatforms;
+    }
+
+    private void validateBetRange(BigDecimal minBet, BigDecimal maxBet) {
+        Objects.requireNonNull(minBet, "minBet must not be null");
+        Objects.requireNonNull(maxBet, "maxBet must not be null");
+
+        if (minBet.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("minBet must be greater than or equal to zero");
+        }
+        if (maxBet.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("maxBet must be greater than or equal to zero");
+        }
+        if (maxBet.compareTo(minBet) < 0) {
+            throw new IllegalArgumentException("maxBet must be greater than or equal to minBet");
+        }
+    }
+
+    public void updateProviderMetadata(
+            String name,
+            GameCategory category,
+            String thumbnailUrl,
+            boolean providerAvailable,
+            Set<String> supportedCurrencies,
+            Set<GamePlatform> supportedPlatforms,
+            BigDecimal minBet,
+            BigDecimal maxBet
+    ) {
+        this.name = Objects.requireNonNull(name, "name must not be null");
+        this.category = Objects.requireNonNull(category, "category must not be null");
+        this.thumbnailUrl = thumbnailUrl;
+        this.providerAvailable = providerAvailable;
+        this.supportedCurrencies = normalizeCurrencies(supportedCurrencies);
+        this.supportedPlatforms = normalizePlatforms(supportedPlatforms);
+        validateBetRange(minBet, maxBet);
+        this.minBet = minBet;
+        this.maxBet = maxBet;
     }
 
     public UUID getId() {
@@ -159,6 +264,30 @@ public class Game {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isProviderAvailable() {
+        return providerAvailable;
+    }
+
+    public void setProviderAvailable(boolean providerAvailable) {
+        this.providerAvailable = providerAvailable;
+    }
+
+    public Set<String> getSupportedCurrencies() {
+        return Collections.unmodifiableSet(supportedCurrencies);
+    }
+
+    public Set<GamePlatform> getSupportedPlatforms() {
+        return Collections.unmodifiableSet(supportedPlatforms);
+    }
+
+    public BigDecimal getMinBet() {
+        return minBet;
+    }
+
+    public BigDecimal getMaxBet() {
+        return maxBet;
     }
 
     public Instant getCreatedAt() {
