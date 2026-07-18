@@ -193,7 +193,37 @@ public class Game {
         }
     }
 
-    public void updateProviderMetadata(
+    public static Game createImportedProviderGame(
+            String name,
+            String slug,
+            GameProvider provider,
+            String providerGameId,
+            GameCategory category,
+            String thumbnailUrl,
+            boolean providerAvailable,
+            Set<String> supportedCurrencies,
+            Set<GamePlatform> supportedPlatforms,
+            BigDecimal minBet,
+            BigDecimal maxBet
+    ) {
+        Game game = new Game(
+                name,
+                slug,
+                provider,
+                providerGameId,
+                category,
+                thumbnailUrl,
+                supportedCurrencies,
+                supportedPlatforms,
+                minBet,
+                maxBet
+        );
+        game.enabled = false;
+        game.providerAvailable = providerAvailable;
+        return game;
+    }
+
+    public boolean updateProviderMetadata(
             String name,
             GameCategory category,
             String thumbnailUrl,
@@ -203,15 +233,55 @@ public class Game {
             BigDecimal minBet,
             BigDecimal maxBet
     ) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.category = Objects.requireNonNull(category, "category must not be null");
-        this.thumbnailUrl = thumbnailUrl;
-        this.providerAvailable = providerAvailable;
-        this.supportedCurrencies = normalizeCurrencies(supportedCurrencies);
-        this.supportedPlatforms = normalizePlatforms(supportedPlatforms);
+        String normalizedName = normalizeName(name);
+        GameCategory normalizedCategory = Objects.requireNonNull(category, "category must not be null");
+        Set<String> normalizedCurrencies = normalizeCurrencies(supportedCurrencies);
+        Set<GamePlatform> normalizedPlatforms = normalizePlatforms(supportedPlatforms);
         validateBetRange(minBet, maxBet);
-        this.minBet = minBet;
-        this.maxBet = maxBet;
+
+        boolean changed = false;
+        if (!this.name.equals(normalizedName)) {
+            this.name = normalizedName;
+            changed = true;
+        }
+        if (this.category != normalizedCategory) {
+            this.category = normalizedCategory;
+            changed = true;
+        }
+        if (!Objects.equals(this.thumbnailUrl, thumbnailUrl)) {
+            this.thumbnailUrl = thumbnailUrl;
+            changed = true;
+        }
+        if (this.providerAvailable != providerAvailable) {
+            this.providerAvailable = providerAvailable;
+            changed = true;
+        }
+        if (!this.supportedCurrencies.equals(normalizedCurrencies)) {
+            this.supportedCurrencies = normalizedCurrencies;
+            changed = true;
+        }
+        if (!this.supportedPlatforms.equals(normalizedPlatforms)) {
+            this.supportedPlatforms = normalizedPlatforms;
+            changed = true;
+        }
+        if (this.minBet.compareTo(minBet) != 0) {
+            this.minBet = minBet;
+            changed = true;
+        }
+        if (this.maxBet.compareTo(maxBet) != 0) {
+            this.maxBet = maxBet;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private String normalizeName(String name) {
+        String normalizedName = Objects.requireNonNull(name, "name must not be null").trim();
+        if (normalizedName.isBlank()) {
+            throw new IllegalArgumentException("name must not be blank");
+        }
+        return normalizedName;
     }
 
     public UUID getId() {

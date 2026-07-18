@@ -1,6 +1,7 @@
 package com.boki0.casino.game.exception;
 
 import com.boki0.casino.game.api.dto.ApiErrorResponse;
+import com.boki0.casino.game.provider.exception.GameSyncException;
 import com.boki0.casino.game.provider.exception.ProviderCatalogException;
 import com.boki0.casino.game.provider.exception.ProviderSyncException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +56,27 @@ public class GameExceptionHandler {
     ) {
         HttpStatus status = switch (exception.getErrorType()) {
             case INVALID_PROVIDER_DATA -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case PERSISTENCE_FAILURE -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(GameSyncException.class)
+    public ResponseEntity<ApiErrorResponse> handleGameSyncException(
+            GameSyncException exception,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = switch (exception.getErrorType()) {
+            case INVALID_GAME_DATA -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case MISSING_PROVIDER -> HttpStatus.CONFLICT;
             case PERSISTENCE_FAILURE -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
         ApiErrorResponse response = new ApiErrorResponse(

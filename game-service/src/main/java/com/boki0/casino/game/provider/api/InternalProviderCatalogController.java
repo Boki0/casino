@@ -3,6 +3,8 @@ package com.boki0.casino.game.provider.api;
 import com.boki0.casino.game.provider.client.ProviderCatalogClient;
 import com.boki0.casino.game.provider.dto.ProviderGameResponse;
 import com.boki0.casino.game.provider.dto.ProviderResponse;
+import com.boki0.casino.game.provider.sync.GameSyncResult;
+import com.boki0.casino.game.provider.sync.GameSyncService;
 import com.boki0.casino.game.provider.sync.ProviderSyncResult;
 import com.boki0.casino.game.provider.sync.ProviderSyncService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +20,16 @@ public class InternalProviderCatalogController {
 
     private final ProviderCatalogClient providerCatalogClient;
     private final ProviderSyncService providerSyncService;
+    private final GameSyncService gameSyncService;
 
     public InternalProviderCatalogController(
             ProviderCatalogClient providerCatalogClient,
-            ProviderSyncService providerSyncService
+            ProviderSyncService providerSyncService,
+            GameSyncService gameSyncService
     ) {
         this.providerCatalogClient = providerCatalogClient;
         this.providerSyncService = providerSyncService;
+        this.gameSyncService = gameSyncService;
     }
 
     // Temporary development endpoint for manually testing provider catalog reads.
@@ -42,5 +47,10 @@ public class InternalProviderCatalogController {
     @PostMapping("/sync/providers")
     public ProviderSyncResult synchronizeProviders() {
         return providerSyncService.synchronizeProviders();
+    }
+
+    @PostMapping("/sync/games")
+    public GameSyncResult synchronizeGames() {
+        return gameSyncService.synchronizeGames();
     }
 }
