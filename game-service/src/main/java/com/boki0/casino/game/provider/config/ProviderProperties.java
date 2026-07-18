@@ -11,6 +11,7 @@ public class ProviderProperties {
     private URI baseUrl;
     private String providersPath;
     private String gamesPath;
+    private boolean allowEmptyGameSnapshot;
 
     public URI getBaseUrl() {
         return Objects.requireNonNull(baseUrl, "baseUrl must not be null");
@@ -34,6 +35,14 @@ public class ProviderProperties {
 
     public void setGamesPath(String gamesPath) {
         this.gamesPath = normalizePath(gamesPath, "gamesPath");
+    }
+
+    public boolean isAllowEmptyGameSnapshot() {
+        return allowEmptyGameSnapshot;
+    }
+
+    public void setAllowEmptyGameSnapshot(boolean allowEmptyGameSnapshot) {
+        this.allowEmptyGameSnapshot = allowEmptyGameSnapshot;
     }
 
     private String normalizePath(String path, String propertyName) {

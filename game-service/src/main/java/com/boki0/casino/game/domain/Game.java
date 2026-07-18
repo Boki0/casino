@@ -276,6 +276,15 @@ public class Game {
         return changed;
     }
 
+    public boolean markProviderUnavailable() {
+        if (!providerAvailable) {
+            return false;
+        }
+
+        providerAvailable = false;
+        return true;
+    }
+
     private String normalizeName(String name) {
         String normalizedName = Objects.requireNonNull(name, "name must not be null").trim();
         if (normalizedName.isBlank()) {

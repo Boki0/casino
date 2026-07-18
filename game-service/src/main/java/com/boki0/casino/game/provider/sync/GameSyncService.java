@@ -3,6 +3,7 @@ package com.boki0.casino.game.provider.sync;
 import com.boki0.casino.game.domain.GameCategory;
 import com.boki0.casino.game.domain.GamePlatform;
 import com.boki0.casino.game.provider.client.ProviderCatalogClient;
+import com.boki0.casino.game.provider.config.ProviderProperties;
 import com.boki0.casino.game.provider.dto.ProviderGameResponse;
 import com.boki0.casino.game.provider.exception.GameSyncException;
 import org.slf4j.Logger;
@@ -24,33 +25,46 @@ public class GameSyncService {
 
     private final ProviderCatalogClient providerCatalogClient;
     private final GameSyncPersistenceService gameSyncPersistenceService;
+    private final ProviderProperties providerProperties;
 
     public GameSyncService(
             ProviderCatalogClient providerCatalogClient,
-            GameSyncPersistenceService gameSyncPersistenceService
+            GameSyncPersistenceService gameSyncPersistenceService,
+            ProviderProperties providerProperties
     ) {
         this.providerCatalogClient = providerCatalogClient;
         this.gameSyncPersistenceService = gameSyncPersistenceService;
+        this.providerProperties = providerProperties;
     }
 
     public GameSyncResult synchronizeGames() {
         List<ProviderGameResponse> games = providerCatalogClient.fetchGames();
         try {
             List<ValidatedGame> validatedGames = validateGames(games);
+            rejectUnsafeEmptySnapshot(validatedGames);
             GameSyncResult result = gameSyncPersistenceService.synchronizeGames(validatedGames);
 
             LOGGER.info(
-                    "Game synchronization completed: received={}, created={}, updated={}, unchanged={}",
+                    "Game synchronization completed: received={}, created={}, updated={}, unchanged={}, markedUnavailable={}",
                     result.received(),
                     result.created(),
                     result.updated(),
-                    result.unchanged()
+                    result.unchanged(),
+                    result.markedUnavailable()
             );
 
             return result;
         } catch (GameSyncException exception) {
             LOGGER.warn("Game synchronization failed: {}", exception.getMessage());
             throw exception;
+        }
+    }
+
+    private void rejectUnsafeEmptySnapshot(List<ValidatedGame> games) {
+        if (games.isEmpty() && !providerProperties.isAllowEmptyGameSnapshot()) {
+            throw GameSyncException.invalidGameData(
+                    "Provider game snapshot is empty; set GAME_PROVIDER_ALLOW_EMPTY_GAME_SNAPSHOT=true to allow reconciliation"
+            );
         }
     }
 

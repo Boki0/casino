@@ -4,6 +4,7 @@ public record GameSyncResult(
         int received,
         int created,
         int updated,
-        int unchanged
+        int unchanged,
+        int markedUnavailable
 ) {
 }

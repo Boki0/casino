@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -44,17 +45,18 @@ public class GameSyncPersistenceService {
     }
 
     private GameSyncResult synchronizeGamesTransactional(List<GameSyncService.ValidatedGame> games) {
-        if (games.isEmpty()) {
-            return new GameSyncResult(0, 0, 0, 0);
-        }
-
-        Map<String, GameProvider> providersByCode = loadReferencedProviders(games);
+        Map<String, GameProvider> providersByCode = loadSynchronizedProviders();
+        verifyReferencedProvidersExist(games, providersByCode);
         Map<GameIdentity, Game> existingGames = loadExistingGames(providersByCode.values());
+        Set<GameIdentity> receivedIdentities = games.stream()
+                .map(GameSyncService.ValidatedGame::identity)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         List<Game> gamesToSave = new ArrayList<>();
         int created = 0;
         int updated = 0;
         int unchanged = 0;
+        int markedUnavailable = 0;
 
         for (GameSyncService.ValidatedGame game : games) {
             GameProvider provider = providersByCode.get(game.identity().providerCode());
@@ -83,36 +85,53 @@ public class GameSyncPersistenceService {
             }
         }
 
+        // This integration treats the provider games endpoint as a complete snapshot.
+        // With the current model, games attached to local GameProvider records are provider-managed.
+        for (Map.Entry<GameIdentity, Game> existingGame : existingGames.entrySet()) {
+            if (!receivedIdentities.contains(existingGame.getKey())
+                    && existingGame.getValue().markProviderUnavailable()) {
+                gamesToSave.add(existingGame.getValue());
+                markedUnavailable++;
+            }
+        }
+
         if (!gamesToSave.isEmpty()) {
             gameRepository.saveAll(gamesToSave);
             gameRepository.flush();
         }
 
-        return new GameSyncResult(games.size(), created, updated, unchanged);
+        return new GameSyncResult(games.size(), created, updated, unchanged, markedUnavailable);
     }
 
-    private Map<String, GameProvider> loadReferencedProviders(List<GameSyncService.ValidatedGame> games) {
+    private Map<String, GameProvider> loadSynchronizedProviders() {
+        return gameProviderRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(GameProvider::getCode, Function.identity()));
+    }
+
+    private void verifyReferencedProvidersExist(
+            List<GameSyncService.ValidatedGame> games,
+            Map<String, GameProvider> providersByCode
+    ) {
         Set<String> providerCodes = games.stream()
                 .map(game -> game.identity().providerCode())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        Map<String, GameProvider> providersByCode = gameProviderRepository.findAllByCodeIn(providerCodes)
-                .stream()
-                .collect(Collectors.toMap(GameProvider::getCode, Function.identity()));
 
         for (String providerCode : providerCodes) {
             if (!providersByCode.containsKey(providerCode)) {
                 throw GameSyncException.missingProvider("Missing local provider for code: " + providerCode);
             }
         }
-
-        return providersByCode;
     }
 
     private Map<GameIdentity, Game> loadExistingGames(Collection<GameProvider> providers) {
         List<UUID> providerIds = providers.stream()
                 .map(GameProvider::getId)
                 .toList();
+
+        if (providerIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
 
         return gameRepository.findAllByProvider_IdIn(providerIds)
                 .stream()
