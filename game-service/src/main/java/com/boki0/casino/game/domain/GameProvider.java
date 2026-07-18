@@ -24,7 +24,8 @@ import java.util.UUID;
         },
         indexes = {
                 @Index(name = "idx_game_providers_code", columnList = "code"),
-                @Index(name = "idx_game_providers_enabled", columnList = "enabled")
+                @Index(name = "idx_game_providers_enabled", columnList = "enabled"),
+                @Index(name = "idx_game_providers_provider_available", columnList = "provider_available")
         }
 )
 public class GameProvider {
@@ -42,6 +43,9 @@ public class GameProvider {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
+
+    @Column(name = "provider_available", nullable = false)
+    private boolean providerAvailable = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -103,6 +107,10 @@ public class GameProvider {
         return enabled;
     }
 
+    public boolean isProviderAvailable() {
+        return providerAvailable;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -113,6 +121,22 @@ public class GameProvider {
 
     public void rename(String name) {
         this.name = normalizeName(name);
+    }
+
+    public boolean updateProviderMetadata(String name, boolean providerAvailable) {
+        String normalizedName = normalizeName(name);
+        boolean changed = false;
+
+        if (!this.name.equals(normalizedName)) {
+            this.name = normalizedName;
+            changed = true;
+        }
+        if (this.providerAvailable != providerAvailable) {
+            this.providerAvailable = providerAvailable;
+            changed = true;
+        }
+
+        return changed;
     }
 
     public void setEnabled(boolean enabled) {
