@@ -3,6 +3,8 @@ package com.boki0.casino.game.provider.api;
 import com.boki0.casino.game.provider.client.ProviderCatalogClient;
 import com.boki0.casino.game.provider.dto.ProviderGameResponse;
 import com.boki0.casino.game.provider.dto.ProviderResponse;
+import com.boki0.casino.game.provider.sync.FullCatalogSyncResult;
+import com.boki0.casino.game.provider.sync.FullCatalogSyncService;
 import com.boki0.casino.game.provider.sync.GameSyncResult;
 import com.boki0.casino.game.provider.sync.GameSyncService;
 import com.boki0.casino.game.provider.sync.ProviderSyncResult;
@@ -19,15 +21,18 @@ import java.util.List;
 public class InternalProviderCatalogController {
 
     private final ProviderCatalogClient providerCatalogClient;
+    private final FullCatalogSyncService fullCatalogSyncService;
     private final ProviderSyncService providerSyncService;
     private final GameSyncService gameSyncService;
 
     public InternalProviderCatalogController(
             ProviderCatalogClient providerCatalogClient,
+            FullCatalogSyncService fullCatalogSyncService,
             ProviderSyncService providerSyncService,
             GameSyncService gameSyncService
     ) {
         this.providerCatalogClient = providerCatalogClient;
+        this.fullCatalogSyncService = fullCatalogSyncService;
         this.providerSyncService = providerSyncService;
         this.gameSyncService = gameSyncService;
     }
@@ -47,6 +52,11 @@ public class InternalProviderCatalogController {
     @PostMapping("/sync/providers")
     public ProviderSyncResult synchronizeProviders() {
         return providerSyncService.synchronizeProviders();
+    }
+
+    @PostMapping("/sync")
+    public FullCatalogSyncResult synchronizeCatalog() {
+        return fullCatalogSyncService.synchronizeCatalog();
     }
 
     @PostMapping("/sync/games")
