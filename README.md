@@ -1,49 +1,45 @@
 # Casino Simulation Platform
 
-Casino Simulation Platform is a backend-focused demo project built with Spring Boot and microservice architecture.
+Backend-focused microservices demo platform built with Java, Spring Boot,
+PostgreSQL, RabbitMQ, Docker Compose, JWT authentication and Spring Cloud Gateway.
 
-The application simulates a casino/gaming platform using virtual credits only. It does not support real money gambling, real deposits, real withdrawals, or real betting.
+The platform uses virtual credits only and does not support real-money gambling.
 
-## Project Goal
+## Implemented Services
 
-The goal of this project is to learn and demonstrate production-like backend concepts such as:
-
-- authentication
-- authorization
 - API Gateway
-- microservices
-- database ownership
-- wallet logic
-- game simulation
-- support tickets
-- audit logging
-- Docker
-- testing
-- Git workflow
+- Authentication Service
+- User Service
+- Wallet Service
+- Payment Service
+- Game Service
+- Notification Service
+- Frontend
 
-## Main Roles
+## Implemented Features
 
-The system will support three main roles:
+- JWT access and refresh token authentication
+- Role-based authorization
+- User profile management
+- Virtual wallet and transaction tracking
+- Sandbox payment workflow
+- RabbitMQ asynchronous messaging
+- Centralized API routing
+- Game provider abstraction
+- Mock provider integration
+- Docker Compose development environment
 
-- USER
-- ADMIN
-- SUPPORT
-
-## Planned Technology Stack
+## Technology Stack
 
 - Java 21
 - Spring Boot 3
 - Spring Security
-- PostgreSQL
-- Docker Compose
+- Spring Data JPA
 - Spring Cloud Gateway
+- PostgreSQL
+- RabbitMQ
+- Docker Compose
 - JWT
-- REST API
+- REST APIs
 - Maven
-- Git
-
-## Development Approach
-
-The project will be developed step by step.
-
-The first phase will focus on project documentation, architecture overview, Git workflow, authentication, API Gateway, and the basic user flow.
+- TypeScript
