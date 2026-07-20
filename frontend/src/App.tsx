@@ -1,29 +1,20 @@
-import { useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import Footer from './components/layout/Footer'
 import Header from './components/layout/Header'
+import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 
-type CurrentPage = 'home' | 'login' | 'register'
-
 function App() {
-  const [currentPage, setCurrentPage] = useState<CurrentPage>('home')
-
   return (
     <>
-      <Header
-        onLoginClick={() => setCurrentPage('login')}
-        onRegisterClick={() => setCurrentPage('register')}
-      />
+      <Header />
       <main>
-        {currentPage === 'login' && <LoginPage />}
-        {currentPage === 'register' && <RegisterPage />}
-        {currentPage === 'home' && (
-          <section className="home-placeholder">
-            <h1>Casino Platform</h1>
-            <p>Home page content will be added here.</p>
-          </section>
-        )}
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
       </main>
       <Footer />
     </>

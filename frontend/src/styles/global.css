@@ -25,21 +25,3 @@ button {
 input {
   font: inherit;
 }
-
-.home-placeholder {
-  width: min(100%, 1200px);
-  min-height: calc(100vh - 76px);
-  margin: 0 auto;
-  padding: 56px 24px;
-  color: var(--color-text);
-}
-
-.home-placeholder h1 {
-  margin: 0 0 12px;
-  font-size: 44px;
-}
-
-.home-placeholder p {
-  margin: 0;
-  color: var(--color-text-muted);
-}

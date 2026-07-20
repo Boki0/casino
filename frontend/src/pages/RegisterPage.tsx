@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import './LoginPage.css'
 import './RegisterPage.css'
 
@@ -93,9 +94,9 @@ function RegisterPage() {
               <span>Already have an account?</span>
             </div>
 
-            <button className="login-form__secondary" type="button">
+            <Link className="login-form__secondary" to="/login">
               Log In
-            </button>
+            </Link>
           </form>
         </div>
       </div>
