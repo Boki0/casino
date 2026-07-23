@@ -58,6 +58,7 @@ public class GameCatalogService {
                 game.getName(),
                 game.getSlug(),
                 game.getProvider().getCode(),
+                game.getProvider().getName(),
                 game.getCategory(),
                 game.getThumbnailUrl(),
                 copySet(game.getSupportedCurrencies()),

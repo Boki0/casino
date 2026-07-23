@@ -12,6 +12,7 @@ public record GameResponse(
         String name,
         String slug,
         String providerCode,
+        String providerName,
         GameCategory category,
         String thumbnailUrl,
         Set<String> supportedCurrencies,
