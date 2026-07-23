@@ -37,13 +37,14 @@ class GatewayAuthenticationFilterTest {
         assertTrue(filter.isPublicPath("/api/auth/login"));
         assertTrue(filter.isPublicPath("/api/auth/refresh"));
         assertTrue(filter.isPublicPath("/api/auth/logout"));
+        assertTrue(filter.isPublicPath("/api/games"));
+        assertTrue(filter.isPublicPath("/api/games/123"));
     }
 
     @Test
     void isPublicPath_shouldReturnFalseForProtectedPaths() {
         assertFalse(filter.isPublicPath("/api/users/me"));
         assertFalse(filter.isPublicPath("/api/auth/me"));
-        assertFalse(filter.isPublicPath("/api/games"));
     }
 
     @Test

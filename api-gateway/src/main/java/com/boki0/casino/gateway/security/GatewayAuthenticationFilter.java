@@ -106,7 +106,9 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     boolean isPublicPath(String path) {
-        return PUBLIC_PATHS.contains(path);
+        return PUBLIC_PATHS.contains(path)
+                || path.equals("/api/games")
+                || path.startsWith("/api/games/");
     }
 
     private ServerHttpRequest removeClientAuthHeaders(ServerHttpRequest request) {
