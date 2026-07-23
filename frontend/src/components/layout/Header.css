@@ -66,8 +66,21 @@
   transition: color 160ms ease;
 }
 
-.app-header__link:hover {
+.app-header__link:hover,
+.app-header__link--active {
   color: var(--color-primary);
+}
+
+.app-header__link--active {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 8px;
+}
+
+.app-header__link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 5px;
 }
 
 .app-header__actions {

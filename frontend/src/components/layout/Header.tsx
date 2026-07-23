@@ -11,6 +11,14 @@ function Header() {
         </Link>
 
         <nav className="app-header__nav" aria-label="Main navigation">
+          <NavLink
+            className={({ isActive }) =>
+              `app-header__link${isActive ? ' app-header__link--active' : ''}`
+            }
+            to="/slots"
+          >
+            Slots
+          </NavLink>
           <a className="app-header__link" href="#">
             About Us
           </a>
