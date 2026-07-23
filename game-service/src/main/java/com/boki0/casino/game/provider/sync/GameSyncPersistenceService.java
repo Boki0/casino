@@ -68,7 +68,7 @@ public class GameSyncPersistenceService {
                 continue;
             }
 
-            if (existingGame.updateProviderMetadata(
+            boolean metadataChanged = existingGame.updateProviderMetadata(
                     game.name(),
                     game.category(),
                     game.thumbnailUrl(),
@@ -77,7 +77,13 @@ public class GameSyncPersistenceService {
                     game.supportedPlatforms(),
                     game.minBet(),
                     game.maxBet()
-            )) {
+            );
+            boolean enabledChanged = !existingGame.isEnabled();
+            if (enabledChanged) {
+                existingGame.setEnabled(true);
+            }
+
+            if (metadataChanged || enabledChanged) {
                 gamesToSave.add(existingGame);
                 updated++;
             } else {

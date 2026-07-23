@@ -218,7 +218,7 @@ public class Game {
                 minBet,
                 maxBet
         );
-        game.enabled = false;
+        game.enabled = true;
         game.providerAvailable = providerAvailable;
         return game;
     }
