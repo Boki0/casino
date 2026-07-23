@@ -103,6 +103,84 @@ public class GameSession {
         return normalizedValue;
     }
 
+    public void activate(String providerSessionId) {
+        requireStatus(GameSessionStatus.CREATED, "activate");
+
+        String normalizedProviderSessionId = requireNonBlank(providerSessionId, "providerSessionId");
+        if (this.providerSessionId != null && !this.providerSessionId.equals(normalizedProviderSessionId)) {
+            throw InvalidGameSessionStateException.forOperation(
+                    status,
+                    "activate",
+                    "provider session ID is already assigned"
+            );
+        }
+
+        this.providerSessionId = normalizedProviderSessionId;
+        this.status = GameSessionStatus.ACTIVE;
+        this.activatedAt = Instant.now();
+    }
+
+    public void markFailed() {
+        requireStatus(GameSessionStatus.CREATED, "mark failed");
+        enterTerminalState(GameSessionStatus.FAILED);
+    }
+
+    public void close() {
+        if (status == GameSessionStatus.CLOSED) {
+            return;
+        }
+
+        requireStatus(GameSessionStatus.ACTIVE, "close");
+        enterTerminalState(GameSessionStatus.CLOSED);
+    }
+
+    public void expire() {
+        if (status == GameSessionStatus.EXPIRED) {
+            return;
+        }
+
+        requireStatus(GameSessionStatus.ACTIVE, "expire");
+        enterTerminalState(GameSessionStatus.EXPIRED);
+    }
+
+    public void revoke() {
+        if (status == GameSessionStatus.REVOKED) {
+            return;
+        }
+        if (status != GameSessionStatus.CREATED && status != GameSessionStatus.ACTIVE) {
+            throw InvalidGameSessionStateException.forOperation(status, "revoke");
+        }
+
+        enterTerminalState(GameSessionStatus.REVOKED);
+    }
+
+    public boolean isActive() {
+        return status == GameSessionStatus.ACTIVE;
+    }
+
+    public boolean isTerminal() {
+        return status == GameSessionStatus.FAILED
+                || status == GameSessionStatus.CLOSED
+                || status == GameSessionStatus.EXPIRED
+                || status == GameSessionStatus.REVOKED;
+    }
+
+    public boolean isExpiredAt(Instant now) {
+        Objects.requireNonNull(now, "now must not be null");
+        return !now.isBefore(expiresAt);
+    }
+
+    private void requireStatus(GameSessionStatus requiredStatus, String operation) {
+        if (status != requiredStatus) {
+            throw InvalidGameSessionStateException.forOperation(status, operation);
+        }
+    }
+
+    private void enterTerminalState(GameSessionStatus terminalStatus) {
+        status = terminalStatus;
+        closedAt = Instant.now();
+    }
+
     public UUID getId() {
         return id;
     }
