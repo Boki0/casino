@@ -236,6 +236,7 @@ echo "wallet-service: http://localhost:8083"
 echo "payment-service: http://localhost:8085"
 echo "notification-service: http://localhost:8086"
 echo "game-service: http://localhost:8087"
+echo "frontend: http://localhost:5173"
 echo "RabbitMQ UI: http://localhost:15672"
 echo "pgAdmin: http://localhost:5050"
 echo ""
@@ -265,5 +266,7 @@ tell application "Terminal"
     do script "printf '\\\\033]0;notification-service\\\\007'; . $NOTIFICATION_ENV_FILE_QUOTED && rm -f $NOTIFICATION_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/notification-service && echo 'Starting notification-service...' && ./mvnw spring-boot:run"
 
     do script "printf '\\\\033]0;game-service\\\\007'; . $GAME_ENV_FILE_QUOTED && rm -f $GAME_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/game-service && echo 'Starting game-service on port 8087...' && ./mvnw spring-boot:run"
+
+    do script "printf '\\\\033]0;frontend\\\\007'; cd $ROOT_DIR_QUOTED/frontend && echo 'Starting frontend on port 5173...' && npm run dev"
 end tell
 EOF
