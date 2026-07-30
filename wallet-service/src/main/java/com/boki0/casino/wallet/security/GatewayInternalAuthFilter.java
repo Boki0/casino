@@ -16,6 +16,8 @@ public class GatewayInternalAuthFilter extends OncePerRequestFilter {
     private static final String HEADER_INTERNAL_GATEWAY_SECRET = "X-Internal-Gateway-Secret";
     private static final String PROTECTED_WALLET_PATH = "/wallet";
     private static final String PROTECTED_WALLET_PATH_PREFIX = "/wallet/";
+    private static final String PROTECTED_INTERNAL_WALLET_PATH = "/internal/wallets";
+    private static final String PROTECTED_INTERNAL_WALLET_PATH_PREFIX = "/internal/wallets/";
 
     private final String internalGatewaySecret;
 
@@ -47,6 +49,9 @@ public class GatewayInternalAuthFilter extends OncePerRequestFilter {
 
     private boolean isProtectedWalletPath(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
-        return requestUri.equals(PROTECTED_WALLET_PATH) || requestUri.startsWith(PROTECTED_WALLET_PATH_PREFIX);
+        return requestUri.equals(PROTECTED_WALLET_PATH)
+                || requestUri.startsWith(PROTECTED_WALLET_PATH_PREFIX)
+                || requestUri.equals(PROTECTED_INTERNAL_WALLET_PATH)
+                || requestUri.startsWith(PROTECTED_INTERNAL_WALLET_PATH_PREFIX);
     }
 }
