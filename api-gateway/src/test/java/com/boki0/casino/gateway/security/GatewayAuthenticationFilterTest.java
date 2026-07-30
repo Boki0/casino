@@ -41,6 +41,7 @@ class GatewayAuthenticationFilterTest {
         assertTrue(filter.isPublicPath("/api/auth/logout", HttpMethod.POST));
         assertTrue(filter.isPublicPath("/api/games", HttpMethod.GET));
         assertTrue(filter.isPublicPath("/api/games/123", HttpMethod.GET));
+        assertTrue(filter.isPublicPath("/api/provider-wallet/authenticate", HttpMethod.POST));
     }
 
     @Test
@@ -48,6 +49,7 @@ class GatewayAuthenticationFilterTest {
         assertFalse(filter.isPublicPath("/api/users/me", HttpMethod.GET));
         assertFalse(filter.isPublicPath("/api/auth/me", HttpMethod.GET));
         assertFalse(filter.isPublicPath("/api/games/123/launch", HttpMethod.POST));
+        assertFalse(filter.isPublicPath("/api/provider-wallet/bet", HttpMethod.POST));
     }
 
     @Test
