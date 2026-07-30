@@ -1,6 +1,7 @@
 package com.boki0.casino.game.exception;
 
 import com.boki0.casino.game.api.dto.ApiErrorResponse;
+import com.boki0.casino.game.domain.InvalidGameSessionStateException;
 import com.boki0.casino.game.provider.exception.GameSyncException;
 import com.boki0.casino.game.provider.exception.ProviderCatalogException;
 import com.boki0.casino.game.provider.exception.ProviderSyncException;
@@ -30,6 +31,30 @@ public class GameExceptionHandler {
         );
 
         return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(GameSessionNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleGameSessionNotFoundException(
+            GameSessionNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({GameUnavailableException.class, InvalidGameSessionStateException.class})
+    public ResponseEntity<ApiErrorResponse> handleGameConflictException(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
     @ExceptionHandler(ProviderCatalogException.class)
@@ -87,6 +112,21 @@ public class GameExceptionHandler {
                 request.getRequestURI()
         );
 
+        return ResponseEntity.status(status).body(response);
+    }
+
+    private ResponseEntity<ApiErrorResponse> errorResponse(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
         return ResponseEntity.status(status).body(response);
     }
 }

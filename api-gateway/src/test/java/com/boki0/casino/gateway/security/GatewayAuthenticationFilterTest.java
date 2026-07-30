@@ -5,6 +5,8 @@ import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
@@ -33,18 +35,30 @@ class GatewayAuthenticationFilterTest {
 
     @Test
     void isPublicPath_shouldReturnTrueForAuthPublicPaths() {
-        assertTrue(filter.isPublicPath("/api/auth/register"));
-        assertTrue(filter.isPublicPath("/api/auth/login"));
-        assertTrue(filter.isPublicPath("/api/auth/refresh"));
-        assertTrue(filter.isPublicPath("/api/auth/logout"));
-        assertTrue(filter.isPublicPath("/api/games"));
-        assertTrue(filter.isPublicPath("/api/games/123"));
+        assertTrue(filter.isPublicPath("/api/auth/register", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/login", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/refresh", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/logout", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/games", HttpMethod.GET));
+        assertTrue(filter.isPublicPath("/api/games/123", HttpMethod.GET));
     }
 
     @Test
     void isPublicPath_shouldReturnFalseForProtectedPaths() {
-        assertFalse(filter.isPublicPath("/api/users/me"));
-        assertFalse(filter.isPublicPath("/api/auth/me"));
+        assertFalse(filter.isPublicPath("/api/users/me", HttpMethod.GET));
+        assertFalse(filter.isPublicPath("/api/auth/me", HttpMethod.GET));
+        assertFalse(filter.isPublicPath("/api/games/123/launch", HttpMethod.POST));
+    }
+
+    @Test
+    void filter_shouldRejectAnonymousGameLaunch() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/games/123/launch")
+        );
+
+        filter.filter(exchange, ignored -> Mono.error(new AssertionError("chain must not be called"))).block();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
     }
 
     @Test

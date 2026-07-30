@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -56,7 +57,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
                 .build();
 
         String path = sanitizedRequest.getURI().getPath();
-        if (isPublicPath(path)) {
+        if (isPublicPath(path, sanitizedRequest.getMethod())) {
             return chain.filter(sanitizedExchange);
         }
 
@@ -105,10 +106,10 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         return Ordered.HIGHEST_PRECEDENCE;
     }
 
-    boolean isPublicPath(String path) {
+    boolean isPublicPath(String path, HttpMethod method) {
         return PUBLIC_PATHS.contains(path)
-                || path.equals("/api/games")
-                || path.startsWith("/api/games/");
+                || (HttpMethod.GET.equals(method)
+                && (path.equals("/api/games") || path.startsWith("/api/games/")));
     }
 
     private ServerHttpRequest removeClientAuthHeaders(ServerHttpRequest request) {
