@@ -31,7 +31,7 @@ public class WalletUserRegisteredEventHandler implements UserRegisteredEventHand
         );
 
         WalletResponse walletResponse = walletService.createWalletForUser(
-                new CreateWalletRequest(event.authUserId(), "CREDITS")
+                new CreateWalletRequest(event.authUserId(), "EUR")
         );
 
         LOGGER.info(

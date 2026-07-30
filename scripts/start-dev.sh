@@ -211,6 +211,7 @@ write_env_var() {
 }
 
 load_local_env
+export GAME_PROVIDER_BASE_URL="http://localhost:8090"
 start_stripe_cli
 write_payment_env_file
 write_notification_env_file

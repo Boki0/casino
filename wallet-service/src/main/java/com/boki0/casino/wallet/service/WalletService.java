@@ -26,7 +26,7 @@ import java.util.UUID;
 public class WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletService.class);
-    private static final String DEFAULT_CURRENCY = "CREDITS";
+    private static final String DEFAULT_CURRENCY = "EUR";
 
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;

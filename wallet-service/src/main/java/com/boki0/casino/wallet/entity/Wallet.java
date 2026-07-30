@@ -29,7 +29,7 @@ import java.util.UUID;
 )
 public class Wallet {
 
-    private static final String DEFAULT_CURRENCY = "CREDITS";
+    private static final String DEFAULT_CURRENCY = "EUR";
 
     @Id
     @UuidGenerator
