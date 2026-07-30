@@ -55,8 +55,13 @@ class ProviderSessionAuthenticationServiceTest {
         when(tokenService.hashToken(RAW_TOKEN)).thenReturn(TOKEN_HASH);
         when(validationService.validate(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id"))
                 .thenReturn(session);
-        when(walletBalanceClient.getBalance(playerId)).thenReturn(
-                new WalletBalanceResponse(playerId, new BigDecimal("1000.00"), "EUR")
+        when(walletBalanceClient.getBalance(playerId, "EUR")).thenReturn(
+                new WalletBalanceResponse(
+                        playerId,
+                        "EUR",
+                        new BigDecimal("1000.00"),
+                        new BigDecimal("25.00")
+                )
         );
 
         ProviderAuthenticateResponse response = authenticationService.authenticate(request);
@@ -64,7 +69,7 @@ class ProviderSessionAuthenticationServiceTest {
         assertEquals(playerId, response.userId());
         assertEquals("EUR", response.currency());
         assertEquals(new BigDecimal("1000.00"), response.cash());
-        assertEquals(BigDecimal.ZERO, response.bonus());
+        assertEquals(new BigDecimal("25.00"), response.bonus());
         assertEquals(0, response.error());
         assertEquals("Success", response.description());
         assertFalse(response.toString().contains(RAW_TOKEN));
@@ -77,24 +82,7 @@ class ProviderSessionAuthenticationServiceTest {
                 "NOVA_SEVEN",
                 "provider-session-id"
         );
-        flow.verify(walletBalanceClient).getBalance(playerId);
-    }
-
-    @Test
-    void shouldRejectWalletCurrencyMismatch() {
-        ProviderAuthenticateRequest request = request();
-        UUID playerId = UUID.randomUUID();
-        when(tokenService.hashToken(RAW_TOKEN)).thenReturn(TOKEN_HASH);
-        when(validationService.validate(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id"))
-                .thenReturn(new ValidatedProviderSession(UUID.randomUUID(), playerId, "EUR"));
-        when(walletBalanceClient.getBalance(playerId)).thenReturn(
-                new WalletBalanceResponse(playerId, BigDecimal.TEN, "CREDITS")
-        );
-
-        assertThrows(
-                ProviderAuthenticationException.class,
-                () -> authenticationService.authenticate(request)
-        );
+        flow.verify(walletBalanceClient).getBalance(playerId, "EUR");
     }
 
     @Test
@@ -104,7 +92,7 @@ class ProviderSessionAuthenticationServiceTest {
         when(tokenService.hashToken(RAW_TOKEN)).thenReturn(TOKEN_HASH);
         when(validationService.validate(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id"))
                 .thenReturn(new ValidatedProviderSession(UUID.randomUUID(), playerId, "EUR"));
-        when(walletBalanceClient.getBalance(playerId))
+        when(walletBalanceClient.getBalance(playerId, "EUR"))
                 .thenThrow(new WalletClientException("Wallet service is unavailable"));
 
         ProviderAuthenticationException exception = assertThrows(
@@ -113,6 +101,27 @@ class ProviderSessionAuthenticationServiceTest {
         );
 
         assertEquals(2001, exception.getErrorCode());
+    }
+
+    @Test
+    void shouldReturnStableErrorForWalletCurrencyMismatch() {
+        ProviderAuthenticateRequest request = request();
+        UUID playerId = UUID.randomUUID();
+        when(tokenService.hashToken(RAW_TOKEN)).thenReturn(TOKEN_HASH);
+        when(validationService.validate(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id"))
+                .thenReturn(new ValidatedProviderSession(UUID.randomUUID(), playerId, "EUR"));
+        when(walletBalanceClient.getBalance(playerId, "EUR"))
+                .thenThrow(new WalletClientException(
+                        "Wallet currency does not match requested currency",
+                        WalletClientException.Category.CURRENCY_MISMATCH
+                ));
+
+        ProviderAuthenticationException exception = assertThrows(
+                ProviderAuthenticationException.class,
+                () -> authenticationService.authenticate(request)
+        );
+
+        assertEquals(1002, exception.getErrorCode());
     }
 
     private ProviderAuthenticateRequest request() {

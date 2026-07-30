@@ -40,21 +40,21 @@ public class ProviderSessionAuthenticationService {
         );
 
         WalletBalanceResponse wallet = getWalletBalance(session);
-        if (!session.currency().equals(wallet.currency())) {
-            throw ProviderAuthenticationException.walletCurrencyMismatch();
-        }
-
         return ProviderAuthenticateResponse.success(
                 session.playerId(),
                 session.currency(),
-                wallet.balance()
+                wallet.cash(),
+                wallet.bonus()
         );
     }
 
     private WalletBalanceResponse getWalletBalance(ValidatedProviderSession session) {
         try {
-            return walletBalanceClient.getBalance(session.playerId());
+            return walletBalanceClient.getBalance(session.playerId(), session.currency());
         } catch (WalletClientException exception) {
+            if (exception.getCategory() == WalletClientException.Category.CURRENCY_MISMATCH) {
+                throw ProviderAuthenticationException.walletCurrencyMismatch();
+            }
             throw ProviderAuthenticationException.walletUnavailable();
         }
     }

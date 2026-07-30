@@ -70,6 +70,42 @@ class ProviderSessionValidationServiceTest {
     }
 
     @Test
+    void shouldRejectFailedSession() {
+        GameSession session = createdSession(Instant.now().plusSeconds(900));
+        session.markFailed();
+        when(gameSessionRepository.findByTokenHash(TOKEN_HASH)).thenReturn(Optional.of(session));
+
+        assertRejected(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id");
+    }
+
+    @Test
+    void shouldRejectClosedSession() {
+        GameSession session = activeSession(Instant.now().plusSeconds(900));
+        session.close();
+        when(gameSessionRepository.findByTokenHash(TOKEN_HASH)).thenReturn(Optional.of(session));
+
+        assertRejected(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id");
+    }
+
+    @Test
+    void shouldRejectSessionWithExpiredStatus() {
+        GameSession session = activeSession(Instant.now().plusSeconds(900));
+        session.expire();
+        when(gameSessionRepository.findByTokenHash(TOKEN_HASH)).thenReturn(Optional.of(session));
+
+        assertRejected(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id");
+    }
+
+    @Test
+    void shouldRejectRevokedSession() {
+        GameSession session = activeSession(Instant.now().plusSeconds(900));
+        session.revoke();
+        when(gameSessionRepository.findByTokenHash(TOKEN_HASH)).thenReturn(Optional.of(session));
+
+        assertRejected(TOKEN_HASH, "NOVA_REELS", "NOVA_SEVEN", "provider-session-id");
+    }
+
+    @Test
     void shouldRejectExpiredSession() {
         GameSession session = activeSession(Instant.now().minusSeconds(1));
         when(gameSessionRepository.findByTokenHash(TOKEN_HASH)).thenReturn(Optional.of(session));

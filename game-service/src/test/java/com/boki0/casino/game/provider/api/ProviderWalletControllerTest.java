@@ -39,7 +39,8 @@ class ProviderWalletControllerTest {
                 .thenReturn(ProviderAuthenticateResponse.success(
                         userId,
                         "EUR",
-                        new BigDecimal("1000.00")
+                        new BigDecimal("1000.00"),
+                        BigDecimal.ZERO
                 ));
 
         mockMvc.perform(post("/api/provider-wallet/authenticate")

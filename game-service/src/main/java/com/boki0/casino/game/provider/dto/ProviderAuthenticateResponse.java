@@ -15,13 +15,14 @@ public record ProviderAuthenticateResponse(
     public static ProviderAuthenticateResponse success(
             UUID userId,
             String currency,
-            BigDecimal cash
+            BigDecimal cash,
+            BigDecimal bonus
     ) {
         return new ProviderAuthenticateResponse(
                 userId,
                 currency,
                 cash,
-                BigDecimal.ZERO,
+                bonus,
                 0,
                 "Success"
         );

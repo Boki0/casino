@@ -4,8 +4,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record WalletBalanceResponse(
-        UUID authUserId,
-        BigDecimal balance,
-        String currency
+        UUID playerId,
+        String currency,
+        BigDecimal cash,
+        BigDecimal bonus
 ) {
 }
