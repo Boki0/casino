@@ -13,6 +13,7 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -96,17 +97,25 @@ public class WalletTransaction {
             String referenceId,
             String idempotencyKey
     ) {
-        this.walletId = walletId;
-        this.authUserId = authUserId;
-        this.type = type;
-        this.status = status;
-        this.amount = amount;
-        this.balanceBefore = balanceBefore;
-        this.balanceAfter = balanceAfter;
-        this.currency = currency;
-        this.referenceType = referenceType;
-        this.referenceId = referenceId;
-        this.idempotencyKey = idempotencyKey;
+        this.walletId = Objects.requireNonNull(walletId, "walletId must not be null");
+        this.authUserId = Objects.requireNonNull(authUserId, "authUserId must not be null");
+        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.status = Objects.requireNonNull(status, "status must not be null");
+        this.amount = Objects.requireNonNull(amount, "amount must not be null");
+        this.balanceBefore = Objects.requireNonNull(balanceBefore, "balanceBefore must not be null");
+        this.balanceAfter = Objects.requireNonNull(balanceAfter, "balanceAfter must not be null");
+        this.currency = requireNonBlank(currency, "currency");
+        this.referenceType = Objects.requireNonNull(referenceType, "referenceType must not be null");
+        this.referenceId = requireNonBlank(referenceId, "referenceId");
+        this.idempotencyKey = requireNonBlank(idempotencyKey, "externalReference");
+    }
+
+    private String requireNonBlank(String value, String fieldName) {
+        String requiredValue = Objects.requireNonNull(value, fieldName + " must not be null").trim();
+        if (requiredValue.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " must not be blank");
+        }
+        return requiredValue;
     }
 
     @PrePersist
@@ -203,6 +212,10 @@ public class WalletTransaction {
     }
 
     public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public String getExternalReference() {
         return idempotencyKey;
     }
 
