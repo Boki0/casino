@@ -1,5 +1,7 @@
 package com.boki0.casino.wallet.entity;
 
+import com.boki0.casino.wallet.exception.InsufficientWalletBalanceException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +17,7 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -112,6 +115,17 @@ public class Wallet {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public void debit(BigDecimal amount) {
+        Objects.requireNonNull(amount, "amount must not be null");
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("amount must be positive");
+        }
+        if (balance.compareTo(amount) < 0) {
+            throw new InsufficientWalletBalanceException();
+        }
+        balance = balance.subtract(amount);
     }
 
     public String getCurrency() {
