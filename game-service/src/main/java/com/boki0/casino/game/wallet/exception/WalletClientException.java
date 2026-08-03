@@ -5,7 +5,12 @@ public class WalletClientException extends RuntimeException {
     public enum Category {
         UNAVAILABLE,
         INVALID_RESPONSE,
-        CURRENCY_MISMATCH
+        CURRENCY_MISMATCH,
+        INVALID_REQUEST,
+        WALLET_NOT_FOUND,
+        INSUFFICIENT_BALANCE,
+        IDEMPOTENCY_CONFLICT,
+        SERVICE_FAILURE
     }
 
     private final Category category;
