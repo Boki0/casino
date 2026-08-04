@@ -128,6 +128,14 @@ public class Wallet {
         balance = balance.subtract(amount);
     }
 
+    public void credit(BigDecimal amount) {
+        Objects.requireNonNull(amount, "amount must not be null");
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("amount must be positive");
+        }
+        balance = balance.add(amount);
+    }
+
     public String getCurrency() {
         return currency;
     }
