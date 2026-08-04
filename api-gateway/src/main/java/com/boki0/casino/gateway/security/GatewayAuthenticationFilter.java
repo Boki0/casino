@@ -109,7 +109,8 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     boolean isPublicPath(String path, HttpMethod method) {
         return PUBLIC_PATHS.contains(path)
                 || (HttpMethod.POST.equals(method)
-                && path.equals("/api/provider-wallet/authenticate"))
+                && (path.equals("/api/provider-wallet/authenticate")
+                || path.equals("/api/provider-wallet/bet")))
                 || (HttpMethod.GET.equals(method)
                 && (path.equals("/api/games") || path.startsWith("/api/games/")));
     }

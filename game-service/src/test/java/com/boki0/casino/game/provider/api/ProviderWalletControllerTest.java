@@ -1,6 +1,7 @@
 package com.boki0.casino.game.provider.api;
 
 import com.boki0.casino.game.provider.auth.ProviderSessionAuthenticationService;
+import com.boki0.casino.game.provider.bet.ProviderBetService;
 import com.boki0.casino.game.provider.dto.ProviderAuthenticateResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +21,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProviderWalletControllerTest {
 
     private ProviderSessionAuthenticationService authenticationService;
+    private ProviderBetService betService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         authenticationService = mock(ProviderSessionAuthenticationService.class);
+        betService = mock(ProviderBetService.class);
         mockMvc = MockMvcBuilders.standaloneSetup(
-                        new ProviderWalletController(authenticationService)
+                        new ProviderWalletController(authenticationService, betService)
                 )
                 .setControllerAdvice(new ProviderCallbackExceptionHandler())
                 .build();

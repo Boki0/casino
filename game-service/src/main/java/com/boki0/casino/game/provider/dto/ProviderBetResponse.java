@@ -12,4 +12,16 @@ public record ProviderBetResponse(
         int error,
         String description
 ) {
+
+    public static ProviderBetResponse error(int error, String description) {
+        return new ProviderBetResponse(
+                null,
+                null,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                error,
+                description
+        );
+    }
 }
