@@ -46,6 +46,7 @@ class WalletBalanceClientTest {
         properties.setBaseUrl(URI.create("http://wallet-service"));
         properties.setBalancePath("/internal/wallets/balance");
         properties.setDebitPath("/internal/wallets/debit");
+        properties.setCreditPath("/internal/wallets/credit");
         client = new WalletBalanceClient(builder, properties, INTERNAL_SECRET);
     }
 

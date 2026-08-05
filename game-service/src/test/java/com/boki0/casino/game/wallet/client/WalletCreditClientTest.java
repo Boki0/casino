@@ -1,8 +1,8 @@
 package com.boki0.casino.game.wallet.client;
 
 import com.boki0.casino.game.config.WalletServiceProperties;
-import com.boki0.casino.game.wallet.dto.WalletDebitRequest;
-import com.boki0.casino.game.wallet.dto.WalletDebitResponse;
+import com.boki0.casino.game.wallet.dto.WalletCreditRequest;
+import com.boki0.casino.game.wallet.dto.WalletCreditResponse;
 import com.boki0.casino.game.wallet.exception.WalletClientException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,10 +27,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-class WalletDebitClientTest {
+class WalletCreditClientTest {
 
     private static final String INTERNAL_SECRET = "internal-secret";
-    private static final String DEBIT_URL = "http://wallet-service/internal/wallets/debit";
+    private static final String CREDIT_URL = "http://wallet-service/internal/wallets/credit";
     private static final UUID PLAYER_ID =
             UUID.fromString("c43e2215-8c9f-4a68-a179-94fcf4274ae9");
     private static final UUID TRANSACTION_ID =
@@ -53,8 +53,8 @@ class WalletDebitClientTest {
     }
 
     @Test
-    void debitPostsExactContractAndReturnsTypedResponse() {
-        server.expect(once(), requestTo(DEBIT_URL))
+    void creditPostsExactContractAndReturnsTypedResponse() {
+        server.expect(once(), requestTo(CREDIT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("X-Internal-Gateway-Secret", INTERNAL_SECRET))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -62,137 +62,102 @@ class WalletDebitClientTest {
                         {
                           "playerId": "c43e2215-8c9f-4a68-a179-94fcf4274ae9",
                           "currency": "EUR",
-                          "amount": 20.00,
-                          "reference": "provider-bet-1"
+                          "amount": 50.00,
+                          "reference": "provider-result-1"
                         }
                         """))
                 .andRespond(withSuccess(validResponse(true), MediaType.APPLICATION_JSON));
 
-        WalletDebitResponse response = client.debit(request());
+        WalletCreditResponse response = client.credit(request());
 
         assertEquals(TRANSACTION_ID, response.transactionId());
         assertEquals(PLAYER_ID, response.playerId());
         assertEquals("EUR", response.currency());
-        assertEquals(new BigDecimal("20.00"), response.amount());
-        assertEquals(new BigDecimal("980.00"), response.cash());
+        assertEquals(new BigDecimal("50.00"), response.amount());
+        assertEquals(new BigDecimal("980.00"), response.balanceBefore());
+        assertEquals(new BigDecimal("1030.00"), response.cash());
         assertEquals(new BigDecimal("0.00"), response.bonus());
-        assertEquals("provider-bet-1", response.reference());
+        assertEquals("provider-result-1", response.reference());
         assertEquals(true, response.duplicate());
         server.verify();
     }
 
     @Test
-    void debitRejectsEmptyResponseBody() {
+    void creditRejectsEmptyResponseBody() {
         expectSuccessResponse("");
-
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitRejectsMalformedResponseBody() {
+    void creditRejectsMalformedResponseBody() {
         expectSuccessResponse("{not-json}");
-
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitRejectsMissingTransactionId() {
+    void creditRejectsMissingRequiredResponseFields() {
+        assertInvalidResponse(validResponse(false).replace("\"" + TRANSACTION_ID + "\"", "null"));
+        assertInvalidResponse(validResponse(false).replace("\"balanceBefore\": 980.00", "\"balanceBefore\": null"));
+        assertInvalidResponse(validResponse(false).replace("\"cash\": 1030.00", "\"cash\": null"));
+        assertInvalidResponse(validResponse(false).replace("\"bonus\": 0.00", "\"bonus\": null"));
+    }
+
+    @Test
+    void creditRejectsPlayerMismatch() {
         expectSuccessResponse(validResponse(false).replace(
-                "\"" + TRANSACTION_ID + "\"",
-                "null"
+                PLAYER_ID.toString(), "00000000-0000-0000-0000-000000000000"
         ));
-
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitRejectsPlayerMismatch() {
-        expectSuccessResponse(validResponse(false).replace(
-                PLAYER_ID.toString(),
-                "00000000-0000-0000-0000-000000000000"
-        ));
-
-        assertCategory(WalletClientException.Category.INVALID_RESPONSE);
-    }
-
-    @Test
-    void debitRejectsCurrencyMismatch() {
+    void creditRejectsCurrencyMismatch() {
         expectSuccessResponse(validResponse(false).replace("\"EUR\"", "\"USD\""));
-
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitRejectsNumericallyDifferentAmount() {
-        expectSuccessResponse(validResponse(false).replace("20.00", "21.00"));
-
+    void creditRejectsNumericallyDifferentAmount() {
+        expectSuccessResponse(validResponse(false).replace("50.00", "51.00"));
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitAcceptsNumericallyEqualAmountWithDifferentScale() {
-        expectSuccessResponse(validResponse(false).replace("20.00", "20.0"));
+    void creditAcceptsNumericallyEqualAmountWithDifferentScale() {
+        expectSuccessResponse(validResponse(false).replace("50.00", "50.0"));
 
-        WalletDebitResponse response = client.debit(request());
+        WalletCreditResponse response = client.credit(request());
 
-        assertEquals(0, response.amount().compareTo(new BigDecimal("20.00")));
+        assertEquals(0, response.amount().compareTo(new BigDecimal("50.00")));
     }
 
     @Test
-    void debitRejectsReferenceMismatch() {
-        expectSuccessResponse(validResponse(false).replace("provider-bet-1", "provider-bet-2"));
-
+    void creditRejectsReferenceMismatch() {
+        expectSuccessResponse(validResponse(false).replace("provider-result-1", "provider-result-2"));
         assertCategory(WalletClientException.Category.INVALID_RESPONSE);
     }
 
     @Test
-    void debitMapsInvalidRequest() {
-        expectStatus(HttpStatus.BAD_REQUEST, "invalid debit");
-
+    void creditMapsKnownHttpErrors() {
+        expectStatus(HttpStatus.BAD_REQUEST);
         assertCategory(WalletClientException.Category.INVALID_REQUEST);
-    }
+        server.reset();
 
-    @Test
-    void debitMapsWalletNotFound() {
-        expectStatus(HttpStatus.NOT_FOUND, "wallet missing");
-
+        expectStatus(HttpStatus.NOT_FOUND);
         assertCategory(WalletClientException.Category.WALLET_NOT_FOUND);
-    }
+        server.reset();
 
-    @Test
-    void debitMapsInsufficientBalanceConflict() {
-        expectStatus(HttpStatus.CONFLICT, "Insufficient wallet balance");
-
-        assertCategory(WalletClientException.Category.INSUFFICIENT_BALANCE);
-    }
-
-    @Test
-    void debitMapsIdempotencyConflict() {
-        expectStatus(
-                HttpStatus.CONFLICT,
-                "External reference has already been used for different transaction data: provider-bet-1"
-        );
-
+        expectStatus(HttpStatus.CONFLICT);
         assertCategory(WalletClientException.Category.IDEMPOTENCY_CONFLICT);
-    }
+        server.reset();
 
-    @Test
-    void debitMapsUnprocessableInsufficientBalance() {
-        expectStatus(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient wallet balance");
-
-        assertCategory(WalletClientException.Category.INSUFFICIENT_BALANCE);
-    }
-
-    @Test
-    void debitMapsWalletServiceFailure() {
-        expectStatus(HttpStatus.INTERNAL_SERVER_ERROR, "database unavailable");
-
+        expectStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         assertCategory(WalletClientException.Category.SERVICE_FAILURE);
     }
 
     @Test
-    void debitMapsConnectionFailure() {
-        server.expect(once(), requestTo(DEBIT_URL))
+    void creditMapsConnectionOrTimeoutFailure() {
+        server.expect(once(), requestTo(CREDIT_URL))
                 .andRespond(request -> {
                     throw new ResourceAccessException("connection timed out");
                 });
@@ -201,34 +166,34 @@ class WalletDebitClientTest {
     }
 
     @Test
-    void debitRejectsInvalidClientInputBeforeCallingWalletService() {
-        assertThrows(NullPointerException.class, () -> client.debit(null));
-        assertThrows(NullPointerException.class, () -> client.debit(new WalletDebitRequest(
-                null, "EUR", new BigDecimal("20.00"), "provider-bet-1"
+    void creditRejectsInvalidClientInputBeforeCallingWalletService() {
+        assertThrows(NullPointerException.class, () -> client.credit(null));
+        assertThrows(NullPointerException.class, () -> client.credit(new WalletCreditRequest(
+                null, "EUR", new BigDecimal("50.00"), "provider-result-1"
         )));
-        assertThrows(IllegalArgumentException.class, () -> client.debit(new WalletDebitRequest(
-                PLAYER_ID, " ", new BigDecimal("20.00"), "provider-bet-1"
+        assertThrows(IllegalArgumentException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, " ", new BigDecimal("50.00"), "provider-result-1"
         )));
-        assertThrows(NullPointerException.class, () -> client.debit(new WalletDebitRequest(
-                PLAYER_ID, "EUR", null, "provider-bet-1"
+        assertThrows(NullPointerException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, "EUR", null, "provider-result-1"
         )));
-        assertThrows(IllegalArgumentException.class, () -> client.debit(new WalletDebitRequest(
-                PLAYER_ID, "EUR", BigDecimal.ZERO, "provider-bet-1"
+        assertThrows(IllegalArgumentException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, "EUR", BigDecimal.ZERO, "provider-result-1"
         )));
-        assertThrows(IllegalArgumentException.class, () -> client.debit(new WalletDebitRequest(
-                PLAYER_ID, "EUR", new BigDecimal("-1.00"), "provider-bet-1"
+        assertThrows(IllegalArgumentException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, "EUR", new BigDecimal("-1.00"), "provider-result-1"
         )));
-        assertThrows(IllegalArgumentException.class, () -> client.debit(new WalletDebitRequest(
-                PLAYER_ID, "EUR", new BigDecimal("20.00"), " "
+        assertThrows(NullPointerException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, "EUR", new BigDecimal("50.00"), null
+        )));
+        assertThrows(IllegalArgumentException.class, () -> client.credit(new WalletCreditRequest(
+                PLAYER_ID, "EUR", new BigDecimal("50.00"), " "
         )));
     }
 
-    private WalletDebitRequest request() {
-        return new WalletDebitRequest(
-                PLAYER_ID,
-                "EUR",
-                new BigDecimal("20.00"),
-                "provider-bet-1"
+    private WalletCreditRequest request() {
+        return new WalletCreditRequest(
+                PLAYER_ID, "EUR", new BigDecimal("50.00"), "provider-result-1"
         );
     }
 
@@ -238,36 +203,38 @@ class WalletDebitClientTest {
                   "transactionId": "%s",
                   "playerId": "%s",
                   "currency": "EUR",
-                  "amount": 20.00,
-                  "cash": 980.00,
+                  "amount": 50.00,
+                  "balanceBefore": 980.00,
+                  "cash": 1030.00,
                   "bonus": 0.00,
-                  "reference": "provider-bet-1",
+                  "reference": "provider-result-1",
                   "duplicate": %s
                 }
                 """.formatted(TRANSACTION_ID, PLAYER_ID, duplicate);
     }
 
+    private void assertInvalidResponse(String responseBody) {
+        expectSuccessResponse(responseBody);
+        assertCategory(WalletClientException.Category.INVALID_RESPONSE);
+        server.reset();
+    }
+
     private void expectSuccessResponse(String responseBody) {
-        server.expect(once(), requestTo(DEBIT_URL))
+        server.expect(once(), requestTo(CREDIT_URL))
                 .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON));
     }
 
-    private void expectStatus(HttpStatus status, String message) {
-        server.expect(once(), requestTo(DEBIT_URL))
+    private void expectStatus(HttpStatus status) {
+        server.expect(once(), requestTo(CREDIT_URL))
                 .andRespond(withStatus(status)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body("""
-                                {
-                                  "status": %d,
-                                  "message": "%s"
-                                }
-                                """.formatted(status.value(), message)));
+                        .body("{\"status\":" + status.value() + ",\"message\":\"safe error\"}"));
     }
 
     private void assertCategory(WalletClientException.Category expectedCategory) {
         WalletClientException exception = assertThrows(
                 WalletClientException.class,
-                () -> client.debit(request())
+                () -> client.credit(request())
         );
         assertEquals(expectedCategory, exception.getCategory());
     }
