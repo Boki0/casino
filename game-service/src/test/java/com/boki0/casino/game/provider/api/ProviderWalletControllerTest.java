@@ -1,6 +1,7 @@
 package com.boki0.casino.game.provider.api;
 
 import com.boki0.casino.game.provider.auth.ProviderSessionAuthenticationService;
+import com.boki0.casino.game.provider.result.ProviderResultService;
 import com.boki0.casino.game.provider.bet.ProviderBetService;
 import com.boki0.casino.game.provider.dto.ProviderAuthenticateResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +30,11 @@ class ProviderWalletControllerTest {
         authenticationService = mock(ProviderSessionAuthenticationService.class);
         betService = mock(ProviderBetService.class);
         mockMvc = MockMvcBuilders.standaloneSetup(
-                        new ProviderWalletController(authenticationService, betService)
+                        new ProviderWalletController(
+                                authenticationService,
+                                betService,
+                                mock(ProviderResultService.class)
+                        )
                 )
                 .setControllerAdvice(new ProviderCallbackExceptionHandler())
                 .build();

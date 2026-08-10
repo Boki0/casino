@@ -43,6 +43,7 @@ class GatewayAuthenticationFilterTest {
         assertTrue(filter.isPublicPath("/api/games/123", HttpMethod.GET));
         assertTrue(filter.isPublicPath("/api/provider-wallet/authenticate", HttpMethod.POST));
         assertTrue(filter.isPublicPath("/api/provider-wallet/bet", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/provider-wallet/result", HttpMethod.POST));
     }
 
     @Test
@@ -51,7 +52,7 @@ class GatewayAuthenticationFilterTest {
         assertFalse(filter.isPublicPath("/api/auth/me", HttpMethod.GET));
         assertFalse(filter.isPublicPath("/api/games/123/launch", HttpMethod.POST));
         assertFalse(filter.isPublicPath("/api/provider-wallet/bet", HttpMethod.GET));
-        assertFalse(filter.isPublicPath("/api/provider-wallet/result", HttpMethod.POST));
+        assertFalse(filter.isPublicPath("/api/provider-wallet/result", HttpMethod.GET));
     }
 
     @Test
@@ -69,6 +70,25 @@ class GatewayAuthenticationFilterTest {
     void filter_shouldAllowAnonymousBetCallbackAndRemoveSpoofedInternalHeaders() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.post("/api/provider-wallet/bet")
+                        .header("X-Auth-User-Id", "spoofed-user")
+                        .header("X-Internal-Gateway-Secret", "spoofed-secret")
+        );
+        AtomicReference<ServerHttpRequest> forwardedRequest = new AtomicReference<>();
+        GatewayFilterChain chain = nextExchange -> {
+            forwardedRequest.set(nextExchange.getRequest());
+            return Mono.empty();
+        };
+
+        filter.filter(exchange, chain).block();
+
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Auth-User-Id"));
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Internal-Gateway-Secret"));
+    }
+
+    @Test
+    void filter_shouldAllowAnonymousResultCallbackAndRemoveSpoofedInternalHeaders() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/provider-wallet/result")
                         .header("X-Auth-User-Id", "spoofed-user")
                         .header("X-Internal-Gateway-Secret", "spoofed-secret")
         );

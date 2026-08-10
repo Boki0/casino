@@ -6,6 +6,9 @@ import com.boki0.casino.game.provider.dto.ProviderAuthenticateRequest;
 import com.boki0.casino.game.provider.dto.ProviderAuthenticateResponse;
 import com.boki0.casino.game.provider.dto.ProviderBetRequest;
 import com.boki0.casino.game.provider.dto.ProviderBetResponse;
+import com.boki0.casino.game.provider.dto.ProviderResultRequest;
+import com.boki0.casino.game.provider.dto.ProviderResultResponse;
+import com.boki0.casino.game.provider.result.ProviderResultService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,13 +22,16 @@ public class ProviderWalletController {
 
     private final ProviderSessionAuthenticationService authenticationService;
     private final ProviderBetService betService;
+    private final ProviderResultService resultService;
 
     public ProviderWalletController(
             ProviderSessionAuthenticationService authenticationService,
-            ProviderBetService betService
+            ProviderBetService betService,
+            ProviderResultService resultService
     ) {
         this.authenticationService = authenticationService;
         this.betService = betService;
+        this.resultService = resultService;
     }
 
     @PostMapping("/authenticate")
@@ -42,5 +48,14 @@ public class ProviderWalletController {
     )
     public ProviderBetResponse bet(@Valid @RequestBody ProviderBetRequest request) {
         return betService.process(request);
+    }
+
+    @PostMapping(
+            path = "/result",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ProviderResultResponse result(@Valid @RequestBody ProviderResultRequest request) {
+        return resultService.process(request);
     }
 }
