@@ -7,6 +7,7 @@ FRESH_START=false
 STRIPE_LISTEN_LOG="/tmp/casino-stripe-listen.log"
 PAYMENT_ENV_FILE="/tmp/casino-payment-service-env.sh"
 NOTIFICATION_ENV_FILE="/tmp/casino-notification-service-env.sh"
+GAME_ENV_FILE="/tmp/casino-game-service-env.sh"
 
 usage() {
     echo "Usage: ./scripts/start-dev.sh [--fresh]"
@@ -62,6 +63,7 @@ shell_quote() {
 is_local_env_key() {
     case "$1" in
         STRIPE_SECRET_KEY|STRIPE_SUCCESS_URL|STRIPE_CANCEL_URL|\
+        GAME_PROVIDER_BASE_URL|GAME_PROVIDER_PROVIDERS_PATH|GAME_PROVIDER_GAMES_PATH|\
         MAIL_HOST|MAIL_PORT|MAIL_USERNAME|MAIL_PASSWORD|MAIL_FROM|\
         MAIL_SMTP_AUTH|MAIL_SMTP_STARTTLS_ENABLE|MAIL_SMTP_STARTTLS_REQUIRED)
             return 0
@@ -190,6 +192,15 @@ write_notification_env_file() {
     write_env_var "$NOTIFICATION_ENV_FILE" MAIL_SMTP_STARTTLS_REQUIRED
 }
 
+write_game_env_file() {
+    : > "$GAME_ENV_FILE"
+    chmod 600 "$GAME_ENV_FILE"
+
+    write_env_var "$GAME_ENV_FILE" GAME_PROVIDER_BASE_URL
+    write_env_var "$GAME_ENV_FILE" GAME_PROVIDER_PROVIDERS_PATH
+    write_env_var "$GAME_ENV_FILE" GAME_PROVIDER_GAMES_PATH
+}
+
 write_env_var() {
     local output_file="$1"
     local name="$2"
@@ -200,9 +211,11 @@ write_env_var() {
 }
 
 load_local_env
+export GAME_PROVIDER_BASE_URL="http://localhost:8090"
 start_stripe_cli
 write_payment_env_file
 write_notification_env_file
+write_game_env_file
 
 echo "Starting Docker infrastructure..."
 cd "$ROOT_DIR"
@@ -223,6 +236,8 @@ echo "user-service: http://localhost:8082"
 echo "wallet-service: http://localhost:8083"
 echo "payment-service: http://localhost:8085"
 echo "notification-service: http://localhost:8086"
+echo "game-service: http://localhost:8087"
+echo "frontend: http://localhost:5173"
 echo "RabbitMQ UI: http://localhost:15672"
 echo "pgAdmin: http://localhost:5050"
 echo ""
@@ -231,6 +246,7 @@ docker compose ps
 ROOT_DIR_QUOTED="$(shell_quote "$ROOT_DIR")"
 PAYMENT_ENV_FILE_QUOTED="$(shell_quote "$PAYMENT_ENV_FILE")"
 NOTIFICATION_ENV_FILE_QUOTED="$(shell_quote "$NOTIFICATION_ENV_FILE")"
+GAME_ENV_FILE_QUOTED="$(shell_quote "$GAME_ENV_FILE")"
 
 osascript <<EOF
 tell application "Terminal"
@@ -249,5 +265,9 @@ tell application "Terminal"
     do script "printf '\\\\033]0;payment-service\\\\007'; . $PAYMENT_ENV_FILE_QUOTED && rm -f $PAYMENT_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/payment-service && echo 'Starting payment-service...' && ./mvnw spring-boot:run"
 
     do script "printf '\\\\033]0;notification-service\\\\007'; . $NOTIFICATION_ENV_FILE_QUOTED && rm -f $NOTIFICATION_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/notification-service && echo 'Starting notification-service...' && ./mvnw spring-boot:run"
+
+    do script "printf '\\\\033]0;game-service\\\\007'; . $GAME_ENV_FILE_QUOTED && rm -f $GAME_ENV_FILE_QUOTED; cd $ROOT_DIR_QUOTED/game-service && echo 'Starting game-service on port 8087...' && ./mvnw spring-boot:run"
+
+    do script "printf '\\\\033]0;frontend\\\\007'; cd $ROOT_DIR_QUOTED/frontend && echo 'Starting frontend on port 5173...' && npm run dev"
 end tell
 EOF

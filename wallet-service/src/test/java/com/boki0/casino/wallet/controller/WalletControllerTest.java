@@ -63,7 +63,7 @@ class WalletControllerTest {
                 UUID.randomUUID(),
                 authUserId,
                 new BigDecimal("125.00"),
-                "CREDITS",
+                "EUR",
                 WalletStatus.ACTIVE,
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now()
@@ -75,7 +75,7 @@ class WalletControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authUserId").value(authUserId.toString()))
                 .andExpect(jsonPath("$.balance").value(125.00))
-                .andExpect(jsonPath("$.currency").value("CREDITS"))
+                .andExpect(jsonPath("$.currency").value("EUR"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"));
     }
 

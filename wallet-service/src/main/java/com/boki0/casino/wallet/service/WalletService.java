@@ -3,6 +3,7 @@ package com.boki0.casino.wallet.service;
 import com.boki0.casino.wallet.dto.CreateWalletRequest;
 import com.boki0.casino.wallet.dto.CreditWalletRequest;
 import com.boki0.casino.wallet.dto.DebitWalletRequest;
+import com.boki0.casino.wallet.dto.InternalWalletBalanceResponse;
 import com.boki0.casino.wallet.dto.WalletResponse;
 import com.boki0.casino.wallet.dto.WalletTransactionResponse;
 import com.boki0.casino.wallet.entity.Wallet;
@@ -11,6 +12,7 @@ import com.boki0.casino.wallet.entity.WalletStatus;
 import com.boki0.casino.wallet.entity.WalletTransaction;
 import com.boki0.casino.wallet.entity.WalletTransactionStatus;
 import com.boki0.casino.wallet.entity.WalletTransactionType;
+import com.boki0.casino.wallet.exception.WalletNotFoundException;
 import com.boki0.casino.wallet.repository.WalletRepository;
 import com.boki0.casino.wallet.repository.WalletTransactionRepository;
 import org.slf4j.Logger;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,7 +29,7 @@ import java.util.UUID;
 public class WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletService.class);
-    private static final String DEFAULT_CURRENCY = "CREDITS";
+    private static final String DEFAULT_CURRENCY = "EUR";
 
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
@@ -67,6 +70,27 @@ public class WalletService {
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found for authUserId: " + authUserId));
 
         return toWalletResponse(wallet);
+    }
+
+    @Transactional(readOnly = true)
+    public InternalWalletBalanceResponse getInternalBalance(UUID playerId, String currency) {
+        if (playerId == null) {
+            throw new IllegalArgumentException("playerId must not be null");
+        }
+
+        String normalizedCurrency = normalizeRequiredCurrency(currency);
+        Wallet wallet = walletRepository.findByAuthUserIdAndCurrency(playerId, normalizedCurrency)
+                .orElseThrow(() -> WalletNotFoundException.forPlayerAndCurrency(
+                        playerId,
+                        normalizedCurrency
+                ));
+
+        return new InternalWalletBalanceResponse(
+                wallet.getAuthUserId(),
+                wallet.getCurrency(),
+                wallet.getBalance(),
+                BigDecimal.ZERO
+        );
     }
 
     @Transactional
@@ -312,6 +336,13 @@ public class WalletService {
             return DEFAULT_CURRENCY;
         }
         return currency;
+    }
+
+    private String normalizeRequiredCurrency(String currency) {
+        if (currency == null || currency.isBlank()) {
+            throw new IllegalArgumentException("currency must not be blank");
+        }
+        return currency.trim().toUpperCase(Locale.ROOT);
     }
 
     private String buildInsufficientFundsDescription(String description) {

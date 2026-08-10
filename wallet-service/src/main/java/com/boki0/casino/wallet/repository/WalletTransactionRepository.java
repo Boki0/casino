@@ -12,6 +12,10 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
 
     Optional<WalletTransaction> findByIdempotencyKey(String idempotencyKey);
 
+    default Optional<WalletTransaction> findByExternalReference(String externalReference) {
+        return findByIdempotencyKey(externalReference);
+    }
+
     boolean existsByIdempotencyKey(String idempotencyKey);
 
     Optional<WalletTransaction> findByReferenceTypeAndReferenceId(

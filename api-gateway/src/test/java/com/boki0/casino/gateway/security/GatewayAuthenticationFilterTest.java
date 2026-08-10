@@ -5,6 +5,8 @@ import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
@@ -33,17 +35,73 @@ class GatewayAuthenticationFilterTest {
 
     @Test
     void isPublicPath_shouldReturnTrueForAuthPublicPaths() {
-        assertTrue(filter.isPublicPath("/api/auth/register"));
-        assertTrue(filter.isPublicPath("/api/auth/login"));
-        assertTrue(filter.isPublicPath("/api/auth/refresh"));
-        assertTrue(filter.isPublicPath("/api/auth/logout"));
+        assertTrue(filter.isPublicPath("/api/auth/register", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/login", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/refresh", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/auth/logout", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/games", HttpMethod.GET));
+        assertTrue(filter.isPublicPath("/api/games/123", HttpMethod.GET));
+        assertTrue(filter.isPublicPath("/api/provider-wallet/authenticate", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/provider-wallet/bet", HttpMethod.POST));
+        assertTrue(filter.isPublicPath("/api/provider-wallet/result", HttpMethod.POST));
     }
 
     @Test
     void isPublicPath_shouldReturnFalseForProtectedPaths() {
-        assertFalse(filter.isPublicPath("/api/users/me"));
-        assertFalse(filter.isPublicPath("/api/auth/me"));
-        assertFalse(filter.isPublicPath("/api/games"));
+        assertFalse(filter.isPublicPath("/api/users/me", HttpMethod.GET));
+        assertFalse(filter.isPublicPath("/api/auth/me", HttpMethod.GET));
+        assertFalse(filter.isPublicPath("/api/games/123/launch", HttpMethod.POST));
+        assertFalse(filter.isPublicPath("/api/provider-wallet/bet", HttpMethod.GET));
+        assertFalse(filter.isPublicPath("/api/provider-wallet/result", HttpMethod.GET));
+    }
+
+    @Test
+    void filter_shouldRejectAnonymousGameLaunch() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/games/123/launch")
+        );
+
+        filter.filter(exchange, ignored -> Mono.error(new AssertionError("chain must not be called"))).block();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    void filter_shouldAllowAnonymousBetCallbackAndRemoveSpoofedInternalHeaders() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/provider-wallet/bet")
+                        .header("X-Auth-User-Id", "spoofed-user")
+                        .header("X-Internal-Gateway-Secret", "spoofed-secret")
+        );
+        AtomicReference<ServerHttpRequest> forwardedRequest = new AtomicReference<>();
+        GatewayFilterChain chain = nextExchange -> {
+            forwardedRequest.set(nextExchange.getRequest());
+            return Mono.empty();
+        };
+
+        filter.filter(exchange, chain).block();
+
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Auth-User-Id"));
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Internal-Gateway-Secret"));
+    }
+
+    @Test
+    void filter_shouldAllowAnonymousResultCallbackAndRemoveSpoofedInternalHeaders() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/provider-wallet/result")
+                        .header("X-Auth-User-Id", "spoofed-user")
+                        .header("X-Internal-Gateway-Secret", "spoofed-secret")
+        );
+        AtomicReference<ServerHttpRequest> forwardedRequest = new AtomicReference<>();
+        GatewayFilterChain chain = nextExchange -> {
+            forwardedRequest.set(nextExchange.getRequest());
+            return Mono.empty();
+        };
+
+        filter.filter(exchange, chain).block();
+
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Auth-User-Id"));
+        assertEquals(null, forwardedRequest.get().getHeaders().getFirst("X-Internal-Gateway-Secret"));
     }
 
     @Test
