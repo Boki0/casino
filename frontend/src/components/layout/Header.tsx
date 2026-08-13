@@ -1,13 +1,22 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import HeaderWalletBalance from './HeaderWalletBalance'
+import { closeGameSession } from '../../api/gameLaunch'
+import { activeGameStorage } from '../../services/activeGameStorage'
 import './Header.css'
 
 function Header() {
   const navigate = useNavigate()
   const { profile, isAuthenticated, logout } = useAuth()
 
-  function handleLogout() {
+  async function handleLogout() {
+    const activeSessionId = window.location.pathname.startsWith('/play/')
+      ? window.location.pathname.slice('/play/'.length)
+      : null
+    if (activeSessionId) {
+      await closeGameSession(activeSessionId).catch(() => undefined)
+      activeGameStorage.clear()
+    }
     logout()
     navigate('/', { replace: true })
   }
@@ -48,7 +57,11 @@ function Header() {
               <span className="app-header__user" title={profile?.username ?? 'Player'}>
                 {profile?.username ?? 'Player'}
               </span>
-              <button className="app-header__logout" type="button" onClick={handleLogout}>
+              <button
+                className="app-header__logout"
+                type="button"
+                onClick={() => void handleLogout()}
+              >
                 Logout
               </button>
             </>

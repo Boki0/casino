@@ -37,3 +37,22 @@ export async function launchGame(
 
   return response.json() as Promise<GameLaunchResponse>
 }
+
+export async function closeGameSession(
+  sessionId: string,
+  keepalive = false,
+): Promise<void> {
+  try {
+    const response = await authenticatedRequest(`/api/games/sessions/${sessionId}/close`, {
+      method: 'POST',
+      keepalive,
+    })
+
+    if (!response.ok) {
+      throw new GameLaunchError('Unable to close the game session.')
+    }
+  } catch (error) {
+    if (error instanceof GameLaunchError) throw error
+    throw new GameLaunchError('Unable to close the game session.')
+  }
+}

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getPublicGames, type PublicGame } from '../api/gameCatalog'
 import { launchGame } from '../api/gameLaunch'
 import { useAuth } from '../auth/useAuth'
+import { activeGameStorage } from '../services/activeGameStorage'
 import './SlotsPage.css'
 
 type ProviderGroup = {
@@ -132,7 +133,13 @@ function SlotsPage() {
 
     try {
       const launch = await launchGame(game.id, currency)
-      window.location.assign(launch.launchUrl)
+      activeGameStorage.save({
+        sessionId: launch.sessionId,
+        gameId: game.id,
+        gameName: game.name,
+        launchUrl: launch.launchUrl,
+      })
+      navigate(`/play/${launch.sessionId}`)
     } catch {
       setLaunchError('The game could not be launched. Please try again.')
       setLaunchingGameId(null)
