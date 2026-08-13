@@ -41,6 +41,14 @@ public class GameExceptionHandler {
         return errorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(GameSessionAccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleGameSessionAccessDeniedException(
+            GameSessionAccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+    }
+
     @ExceptionHandler({GameUnavailableException.class, InvalidGameSessionStateException.class})
     public ResponseEntity<ApiErrorResponse> handleGameConflictException(
             RuntimeException exception,

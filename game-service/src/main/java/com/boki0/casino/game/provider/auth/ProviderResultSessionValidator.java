@@ -71,7 +71,9 @@ public class ProviderResultSessionValidator {
 
     private void validateSession(GameSession session, ProviderResultRequest request) {
         Game game = session.getGame();
-        if (session.getStatus() != GameSessionStatus.ACTIVE
+        boolean canSettleResult = session.getStatus() == GameSessionStatus.ACTIVE
+                || session.getStatus() == GameSessionStatus.CLOSED;
+        if (!canSettleResult
                 || session.isExpiredAt(Instant.now())
                 || !Objects.equals(request.providerId(), game.getProvider().getCode())
                 || !Objects.equals(request.gameId(), game.getProviderGameId())

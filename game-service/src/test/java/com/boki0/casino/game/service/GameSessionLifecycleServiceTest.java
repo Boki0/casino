@@ -48,6 +48,47 @@ class GameSessionLifecycleServiceTest {
     }
 
     @Test
+    void ownerShouldCloseExistingSession() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        GameSession session = mock(GameSession.class);
+        when(session.getPlayerId()).thenReturn(playerId);
+        when(gameSessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        lifecycleService.close(sessionId, playerId);
+
+        verify(session).close();
+    }
+
+    @Test
+    void repeatedOwnerCloseDelegatesToIdempotentSessionTransition() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        GameSession session = mock(GameSession.class);
+        when(session.getPlayerId()).thenReturn(playerId);
+        when(gameSessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        lifecycleService.close(sessionId, playerId);
+        lifecycleService.close(sessionId, playerId);
+
+        verify(session, org.mockito.Mockito.times(2)).close();
+    }
+
+    @Test
+    void anotherPlayerShouldNotCloseSession() {
+        UUID sessionId = UUID.randomUUID();
+        GameSession session = mock(GameSession.class);
+        when(session.getPlayerId()).thenReturn(UUID.randomUUID());
+        when(gameSessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(
+                com.boki0.casino.game.exception.GameSessionAccessDeniedException.class,
+                () -> lifecycleService.close(sessionId, UUID.randomUUID())
+        );
+        verify(session, org.mockito.Mockito.never()).close();
+    }
+
+    @Test
     void shouldRejectMissingSession() {
         UUID sessionId = UUID.randomUUID();
         when(gameSessionRepository.findById(sessionId)).thenReturn(Optional.empty());

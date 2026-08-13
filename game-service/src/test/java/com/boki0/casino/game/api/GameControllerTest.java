@@ -5,6 +5,7 @@ import com.boki0.casino.game.security.GatewayLaunchAuthenticationInterceptor;
 import com.boki0.casino.game.service.GameCatalogService;
 import com.boki0.casino.game.service.GameLaunchResult;
 import com.boki0.casino.game.service.GameLaunchService;
+import com.boki0.casino.game.service.GameSessionLifecycleService;
 import com.boki0.casino.game.service.PrepareGameLaunchCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,13 +35,19 @@ class GameControllerTest {
 
     private GameCatalogService gameCatalogService;
     private GameLaunchService gameLaunchService;
+    private GameSessionLifecycleService gameSessionLifecycleService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         gameCatalogService = mock(GameCatalogService.class);
         gameLaunchService = mock(GameLaunchService.class);
-        GameController controller = new GameController(gameCatalogService, gameLaunchService);
+        gameSessionLifecycleService = mock(GameSessionLifecycleService.class);
+        GameController controller = new GameController(
+                gameCatalogService,
+                gameLaunchService,
+                gameSessionLifecycleService
+        );
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
@@ -101,9 +108,35 @@ class GameControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currency\":\"EUR\"}"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Unauthorized game launch request"));
+                .andExpect(jsonPath("$.error").value("Unauthorized game request"));
 
         verify(gameLaunchService, never()).launch(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void authenticatedOwnerShouldCloseSessionWithoutResponseBody() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        mockMvc.perform(post("/games/sessions/{sessionId}/close", sessionId)
+                        .header("X-Internal-Gateway-Secret", INTERNAL_SECRET)
+                        .header("X-Auth-User-Id", playerId))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(gameSessionLifecycleService).close(sessionId, playerId);
+    }
+
+    @Test
+    void closeShouldRejectAnonymousRequest() throws Exception {
+        mockMvc.perform(post("/games/sessions/{sessionId}/close", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Unauthorized game request"));
+
+        verify(gameSessionLifecycleService, never()).close(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 
     @Test
