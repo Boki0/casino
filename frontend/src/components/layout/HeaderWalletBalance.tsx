@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { walletApi } from '../../api/wallet/walletApi'
 import type { WalletResponse } from '../../api/wallet/walletTypes'
 
@@ -17,14 +17,14 @@ function formatBalance(wallet: WalletResponse): string {
 }
 
 function HeaderWalletBalance() {
+  const location = useLocation()
   const [wallet, setWallet] = useState<WalletResponse | null>(null)
   const [hasError, setHasError] = useState(false)
+  const isGameActive = location.pathname.startsWith('/play/')
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    walletApi
-      .getMyWallet(controller.signal)
+  const loadWallet = useCallback((signal?: AbortSignal) => {
+    return walletApi
+      .getMyWallet(signal)
       .then((loadedWallet) => {
         setWallet(loadedWallet)
         setHasError(false)
@@ -33,9 +33,33 @@ function HeaderWalletBalance() {
         if (error instanceof DOMException && error.name === 'AbortError') return
         setHasError(true)
       })
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadWallet(controller.signal)
 
     return () => controller.abort()
-  }, [])
+  }, [loadWallet])
+
+  useEffect(() => {
+    if (!isGameActive) return
+
+    const controllers = new Set<AbortController>()
+    const refreshWallet = () => {
+      const controller = new AbortController()
+      controllers.add(controller)
+      void loadWallet(controller.signal).finally(() => controllers.delete(controller))
+    }
+
+    refreshWallet()
+    const intervalId = window.setInterval(refreshWallet, 8000)
+
+    return () => {
+      window.clearInterval(intervalId)
+      controllers.forEach((controller) => controller.abort())
+    }
+  }, [isGameActive, loadWallet])
 
   return (
     <div className="app-header__wallet" aria-live="polite">
