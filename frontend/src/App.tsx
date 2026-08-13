@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import SlotsPage from './pages/SlotsPage'
 import DepositPage from './pages/account/DepositPage'
+import DepositSuccessPage from './pages/account/DepositSuccessPage'
 import ProfilePage from './pages/account/ProfilePage'
 import SettingsPage from './pages/account/SettingsPage'
 import WithdrawPage from './pages/account/WithdrawPage'
@@ -40,6 +41,7 @@ function App() {
             <Route index element={<Navigate to="profile" replace />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="deposit" element={<DepositPage />} />
+            <Route path="deposit/success" element={<DepositSuccessPage />} />
             <Route path="withdraw" element={<WithdrawPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
