@@ -1,11 +1,11 @@
 import type { UserProfile } from './profileTypes'
+import { authenticatedRequest } from '../http/authenticatedRequest'
 
-async function getCurrentProfile(accessToken: string): Promise<UserProfile> {
-  const response = await fetch('/api/users/me', {
+async function getCurrentProfile(): Promise<UserProfile> {
+  const response = await authenticatedRequest('/api/users/me', {
     method: 'GET',
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
     },
   })
 

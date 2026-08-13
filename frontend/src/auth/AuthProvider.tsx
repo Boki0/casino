@@ -29,7 +29,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     authStorage.saveAuth(loginResponse)
 
     try {
-      const loadedProfile = await profileApi.getCurrentProfile(loginResponse.accessToken)
+      const loadedProfile = await profileApi.getCurrentProfile()
       authStorage.saveProfile(loadedProfile)
       setProfile(loadedProfile)
     } catch {

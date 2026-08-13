@@ -114,6 +114,13 @@
   white-space: nowrap;
 }
 
+.app-header__balance {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .app-header__login {
   display: inline-flex;
   align-items: center;
@@ -192,6 +199,10 @@
     max-width: 150px;
   }
 
+  .app-header__balance {
+    font-size: 13px;
+  }
+
   .app-header__logout {
     padding: 0 14px;
   }
@@ -229,5 +240,11 @@
 
   .app-header__user {
     display: none;
+  }
+
+  .app-header__balance {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

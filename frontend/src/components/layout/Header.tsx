@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import HeaderWalletBalance from './HeaderWalletBalance'
 import './Header.css'
 
 function Header() {
@@ -43,6 +44,7 @@ function Header() {
         <div className="app-header__actions">
           {isAuthenticated ? (
             <>
+              <HeaderWalletBalance />
               <span className="app-header__user" title={profile?.username ?? 'Player'}>
                 {profile?.username ?? 'Player'}
               </span>
