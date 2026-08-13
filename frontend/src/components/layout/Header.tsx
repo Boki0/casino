@@ -1,7 +1,16 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import './Header.css'
 
 function Header() {
+  const navigate = useNavigate()
+  const { profile, isAuthenticated, logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    navigate('/', { replace: true })
+  }
+
   return (
     <header className="app-header">
       <div className="app-header__container">
@@ -19,24 +28,38 @@ function Header() {
           >
             Slots
           </NavLink>
-          <a className="app-header__link" href="#">
-            About Us
-          </a>
-          <a className="app-header__link" href="#">
-            FAQ
-          </a>
-          <a className="app-header__link" href="#">
-            VIP Club
-          </a>
+          {isAuthenticated && (
+            <NavLink
+              className={({ isActive }) =>
+                `app-header__link${isActive ? ' app-header__link--active' : ''}`
+              }
+              to="/profile"
+            >
+              Profile
+            </NavLink>
+          )}
         </nav>
 
         <div className="app-header__actions">
-          <NavLink className="app-header__login" to="/login">
-            Log In
-          </NavLink>
-          <NavLink className="app-header__register" to="/register">
-            Register
-          </NavLink>
+          {isAuthenticated ? (
+            <>
+              <span className="app-header__user" title={profile?.username ?? 'Player'}>
+                {profile?.username ?? 'Player'}
+              </span>
+              <button className="app-header__logout" type="button" onClick={handleLogout}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink className="app-header__login" to="/login">
+                Log In
+              </NavLink>
+              <NavLink className="app-header__register" to="/register">
+                Register
+              </NavLink>
+            </>
+          )}
         </div>
       </div>
     </header>

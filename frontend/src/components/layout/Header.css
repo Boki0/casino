@@ -91,7 +91,8 @@
 }
 
 .app-header__login,
-.app-header__register {
+.app-header__register,
+.app-header__logout {
   height: 48px;
   border-radius: 10px;
   border: 1px solid transparent;
@@ -101,6 +102,16 @@
     background-color 160ms ease,
     border-color 160ms ease,
     color 160ms ease;
+}
+
+.app-header__user {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-header__login {
@@ -115,6 +126,17 @@
 }
 
 .app-header__login:hover {
+  background: var(--color-surface);
+}
+
+.app-header__logout {
+  padding: 0 20px;
+  color: var(--color-text);
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.app-header__logout:hover {
   background: var(--color-surface);
 }
 
@@ -153,7 +175,8 @@
   }
 
   .app-header__login,
-  .app-header__register {
+  .app-header__register,
+  .app-header__logout {
     height: 44px;
   }
 
@@ -163,6 +186,14 @@
 
   .app-header__register {
     padding: 0 16px;
+  }
+
+  .app-header__user {
+    max-width: 150px;
+  }
+
+  .app-header__logout {
+    padding: 0 14px;
   }
 }
 
@@ -184,13 +215,19 @@
   }
 
   .app-header__login,
-  .app-header__register {
+  .app-header__register,
+  .app-header__logout {
     height: 40px;
     font-size: 14px;
   }
 
   .app-header__login,
-  .app-header__register {
+  .app-header__register,
+  .app-header__logout {
     padding: 0 12px;
+  }
+
+  .app-header__user {
+    display: none;
   }
 }

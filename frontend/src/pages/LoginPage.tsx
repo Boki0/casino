@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthApiError, authApi } from '../api/auth/authApi'
 import type { LoginRequest } from '../api/auth/authTypes'
-import { authStorage } from '../services/authStorage'
+import { useAuth } from '../auth/useAuth'
 import './LoginPage.css'
 
 type LoginLocationState = {
@@ -34,6 +34,7 @@ function validateForm(form: LoginFormState): string | null {
 function LoginPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const auth = useAuth()
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [form, setForm] = useState<LoginFormState>(INITIAL_FORM_STATE)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -65,7 +66,7 @@ function LoginPage() {
 
     try {
       const loginResponse = await authApi.login(request)
-      authStorage.saveAuth(loginResponse)
+      await auth.login(loginResponse)
       navigate('/', { replace: true })
     } catch (error) {
       setErrorMessage(
