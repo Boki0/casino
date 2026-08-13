@@ -7,6 +7,8 @@ import './LoginPage.css'
 
 type LoginLocationState = {
   registrationMessage?: string
+  loginMessage?: string
+  from?: string
 }
 
 type LoginFormState = {
@@ -39,8 +41,13 @@ function LoginPage() {
   const [form, setForm] = useState<LoginFormState>(INITIAL_FORM_STATE)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const registrationMessage = (location.state as LoginLocationState | null)
-    ?.registrationMessage
+  const locationState = location.state as LoginLocationState | null
+  const informationMessage = locationState?.registrationMessage ?? locationState?.loginMessage
+
+  function getSafeDestination(): string {
+    const destination = locationState?.from
+    return destination?.startsWith('/') && !destination.startsWith('//') ? destination : '/'
+  }
 
   function updateField(field: keyof LoginFormState, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }))
@@ -67,7 +74,7 @@ function LoginPage() {
     try {
       const loginResponse = await authApi.login(request)
       await auth.login(loginResponse)
-      navigate('/', { replace: true })
+      navigate(getSafeDestination(), { replace: true })
     } catch (error) {
       setErrorMessage(
         error instanceof AuthApiError
@@ -104,9 +111,9 @@ function LoginPage() {
               <h2>Log In</h2>
             </div>
 
-            {registrationMessage && (
+            {informationMessage && (
               <p className="login-form__message login-form__message--success" role="status">
-                {registrationMessage}
+                {informationMessage}
               </p>
             )}
 
