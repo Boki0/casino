@@ -128,6 +128,20 @@
   font-size: 40px;
 }
 
+.login-form__message {
+  margin: -12px 0 22px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.login-form__message--success {
+  color: var(--color-primary);
+  background: rgba(1, 255, 128, 0.09);
+  border: 1px solid rgba(1, 255, 128, 0.2);
+}
+
 .login-form__field {
   display: grid;
   gap: 10px;

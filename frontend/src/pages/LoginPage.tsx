@@ -1,9 +1,16 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import './LoginPage.css'
 
+type LoginLocationState = {
+  registrationMessage?: string
+}
+
 function LoginPage() {
+  const location = useLocation()
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const registrationMessage = (location.state as LoginLocationState | null)
+    ?.registrationMessage
 
   return (
     <section className="login-page" id="login">
@@ -30,6 +37,12 @@ function LoginPage() {
               <p className="login-form__eyebrow">Player access</p>
               <h2>Log In</h2>
             </div>
+
+            {registrationMessage && (
+              <p className="login-form__message login-form__message--success" role="status">
+                {registrationMessage}
+              </p>
+            )}
 
             <label className="login-form__field">
               <span>Email</span>
