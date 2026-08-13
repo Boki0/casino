@@ -142,6 +142,12 @@
   border: 1px solid rgba(1, 255, 128, 0.2);
 }
 
+.login-form__message--error {
+  color: #ffb4b4;
+  background: rgba(204, 51, 51, 0.14);
+  border: 1px solid rgba(255, 100, 100, 0.28);
+}
+
 .login-form__field {
   display: grid;
   gap: 10px;
@@ -222,6 +228,11 @@
 
 .login-form__submit:hover {
   background: var(--color-primary-hover);
+}
+
+.login-form__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .login-form__divider {
