@@ -104,21 +104,16 @@
     color 160ms ease;
 }
 
-.app-header__user {
-  max-width: 220px;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .app-header__balance {
   color: var(--color-primary);
   font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
   white-space: nowrap;
+}
+
+.app-header__balance:hover {
+  color: var(--color-primary-hover);
 }
 
 .app-header__login {
@@ -195,10 +190,6 @@
     padding: 0 16px;
   }
 
-  .app-header__user {
-    max-width: 150px;
-  }
-
   .app-header__balance {
     font-size: 13px;
   }
@@ -236,10 +227,6 @@
   .app-header__register,
   .app-header__logout {
     padding: 0 12px;
-  }
-
-  .app-header__user {
-    display: none;
   }
 
   .app-header__balance {

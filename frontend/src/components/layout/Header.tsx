@@ -7,7 +7,7 @@ import './Header.css'
 
 function Header() {
   const navigate = useNavigate()
-  const { profile, isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
 
   async function handleLogout() {
     const activeSessionId = window.location.pathname.startsWith('/play/')
@@ -43,7 +43,7 @@ function Header() {
               className={({ isActive }) =>
                 `app-header__link${isActive ? ' app-header__link--active' : ''}`
               }
-              to="/profile"
+              to="/account/profile"
             >
               Profile
             </NavLink>
@@ -54,9 +54,6 @@ function Header() {
           {isAuthenticated ? (
             <>
               <HeaderWalletBalance />
-              <span className="app-header__user" title={profile?.username ?? 'Player'}>
-                {profile?.username ?? 'Player'}
-              </span>
               <button
                 className="app-header__logout"
                 type="button"

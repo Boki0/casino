@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { walletApi } from '../../api/wallet/walletApi'
 import type { WalletResponse } from '../../api/wallet/walletTypes'
 
@@ -37,9 +38,9 @@ function HeaderWalletBalance() {
   }, [])
 
   return (
-    <span className="app-header__balance" aria-live="polite">
+    <Link className="app-header__balance" to="/account/profile" aria-live="polite">
       {hasError ? 'Balance unavailable' : `Balance: ${wallet ? formatBalance(wallet) : '...'}`}
-    </span>
+    </Link>
   )
 }
 

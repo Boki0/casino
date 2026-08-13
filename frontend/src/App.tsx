@@ -1,12 +1,16 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Footer from './components/layout/Footer'
 import Header from './components/layout/Header'
+import AccountLayout from './components/account/AccountLayout'
 import HomePage from './pages/HomePage'
 import GamePlayerPage from './pages/GamePlayerPage'
 import LoginPage from './pages/LoginPage'
-import ProfilePage from './pages/ProfilePage'
 import RegisterPage from './pages/RegisterPage'
 import SlotsPage from './pages/SlotsPage'
+import DepositPage from './pages/account/DepositPage'
+import ProfilePage from './pages/account/ProfilePage'
+import SettingsPage from './pages/account/SettingsPage'
+import WithdrawPage from './pages/account/WithdrawPage'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 
 function App() {
@@ -25,8 +29,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="profile" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="deposit" element={<DepositPage />} />
+            <Route path="withdraw" element={<WithdrawPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<Navigate to="/account/profile" replace />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </main>
