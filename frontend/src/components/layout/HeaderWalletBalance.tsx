@@ -38,9 +38,16 @@ function HeaderWalletBalance() {
   }, [])
 
   return (
-    <Link className="app-header__balance" to="/account/profile" aria-live="polite">
-      {hasError ? 'Balance unavailable' : `Balance: ${wallet ? formatBalance(wallet) : '...'}`}
-    </Link>
+    <div className="app-header__wallet" aria-live="polite">
+      <Link className="app-header__balance" to="/account/profile">
+        <span>Your Balance</span>
+        <strong>{hasError ? 'Unavailable' : wallet ? formatBalance(wallet) : '...'}</strong>
+      </Link>
+      <Link className="app-header__deposit" to="/account/deposit">
+        <span aria-hidden="true">+</span>
+        Deposit
+      </Link>
+    </div>
   )
 }
 

@@ -104,16 +104,68 @@
     color 160ms ease;
 }
 
+.app-header__wallet {
+  height: 54px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg);
+}
+
 .app-header__balance {
-  color: var(--color-primary);
-  font-size: 14px;
-  font-weight: 700;
+  min-width: 108px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--color-text);
   text-decoration: none;
   white-space: nowrap;
 }
 
-.app-header__balance:hover {
-  color: var(--color-primary-hover);
+.app-header__balance span {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.app-header__balance strong {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.app-header__deposit {
+  min-width: 116px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-bg);
+  border-radius: 13px;
+  background: var(--color-primary);
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.app-header__deposit:hover {
+  background: var(--color-primary-hover);
+}
+
+.app-header__deposit span {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  border-radius: 50%;
+  background: var(--color-bg);
+  font-size: 14px;
+  line-height: 1;
 }
 
 .app-header__login {
@@ -191,7 +243,14 @@
   }
 
   .app-header__balance {
-    font-size: 13px;
+    min-width: 96px;
+    padding: 7px 10px;
+  }
+
+  .app-header__deposit {
+    min-width: 96px;
+    padding: 0 12px;
+    font-size: 14px;
   }
 
   .app-header__logout {
@@ -230,8 +289,24 @@
   }
 
   .app-header__balance {
-    max-width: 130px;
+    min-width: 88px;
+    padding: 6px 9px;
+  }
+
+  .app-header__balance strong {
+    max-width: 82px;
     overflow: hidden;
+    font-size: 13px;
     text-overflow: ellipsis;
+  }
+
+  .app-header__deposit {
+    min-width: 44px;
+    padding: 0 12px;
+    font-size: 0;
+  }
+
+  .app-header__deposit span {
+    font-size: 14px;
   }
 }
