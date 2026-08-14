@@ -2,6 +2,7 @@ package com.boki0.casino.game.service;
 
 import com.boki0.casino.game.domain.GameSession;
 import com.boki0.casino.game.exception.GameSessionNotFoundException;
+import com.boki0.casino.game.exception.GameSessionAccessDeniedException;
 import com.boki0.casino.game.repository.GameSessionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,16 @@ public class GameSessionLifecycleService {
     public void markFailed(UUID sessionId) {
         GameSession session = findSession(sessionId);
         session.markFailed();
+    }
+
+    @Transactional
+    public void close(UUID sessionId, UUID authenticatedPlayerId) {
+        Objects.requireNonNull(authenticatedPlayerId, "authenticatedPlayerId must not be null");
+        GameSession session = findSession(sessionId);
+        if (!session.getPlayerId().equals(authenticatedPlayerId)) {
+            throw new GameSessionAccessDeniedException();
+        }
+        session.close();
     }
 
     private GameSession findSession(UUID sessionId) {

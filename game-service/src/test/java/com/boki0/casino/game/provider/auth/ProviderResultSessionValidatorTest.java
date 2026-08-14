@@ -86,7 +86,7 @@ class ProviderResultSessionValidatorTest {
     }
 
     @Test
-    void createdFailedExpiredRevokedAndClosedSessionsAreRejected() {
+    void createdFailedExpiredAndRevokedSessionsAreRejected() {
         GameSession created = createdSession(Instant.now().plusSeconds(900));
         expectSession(created);
         assertRejected(request(BigDecimal.ZERO));
@@ -106,10 +106,18 @@ class ProviderResultSessionValidatorTest {
         expectSession(revoked);
         assertRejected(request(BigDecimal.ZERO));
 
+    }
+
+    @Test
+    void closedSessionCanSettleAnAlreadyAcceptedResultUntilExpiry() {
         GameSession closed = activeSession(Instant.now().plusSeconds(900));
         closed.close();
         expectSession(closed);
-        assertRejected(request(BigDecimal.ZERO));
+
+        assertEquals(
+                new BigDecimal("50.00"),
+                validator.validate(request(new BigDecimal("50.00"))).amount()
+        );
     }
 
     @Test

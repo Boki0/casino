@@ -6,6 +6,7 @@ import com.boki0.casino.game.api.dto.GameResponse;
 import com.boki0.casino.game.service.GameCatalogService;
 import com.boki0.casino.game.service.GameLaunchResult;
 import com.boki0.casino.game.service.GameLaunchService;
+import com.boki0.casino.game.service.GameSessionLifecycleService;
 import com.boki0.casino.game.service.PrepareGameLaunchCommand;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,13 +30,16 @@ public class GameController {
 
     private final GameCatalogService gameCatalogService;
     private final GameLaunchService gameLaunchService;
+    private final GameSessionLifecycleService gameSessionLifecycleService;
 
     public GameController(
             GameCatalogService gameCatalogService,
-            GameLaunchService gameLaunchService
+            GameLaunchService gameLaunchService,
+            GameSessionLifecycleService gameSessionLifecycleService
     ) {
         this.gameCatalogService = gameCatalogService;
         this.gameLaunchService = gameLaunchService;
+        this.gameSessionLifecycleService = gameSessionLifecycleService;
     }
 
     @GetMapping
@@ -61,5 +67,14 @@ public class GameController {
                 new PrepareGameLaunchCommand(gameId, playerId, request.currency())
         );
         return new GameLaunchResponse(result.localSessionId(), result.launchUrl());
+    }
+
+    @PostMapping("/sessions/{sessionId}/close")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void closeGameSession(
+            @PathVariable UUID sessionId,
+            @RequestHeader(HEADER_AUTH_USER_ID) UUID playerId
+    ) {
+        gameSessionLifecycleService.close(sessionId, playerId);
     }
 }

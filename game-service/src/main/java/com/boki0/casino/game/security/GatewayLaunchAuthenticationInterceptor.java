@@ -32,7 +32,7 @@ public class GatewayLaunchAuthenticationInterceptor implements HandlerIntercepto
             HttpServletResponse response,
             Object handler
     ) throws IOException {
-        if (!isLaunchRequest(request)) {
+        if (!isProtectedGameRequest(request)) {
             return true;
         }
 
@@ -40,25 +40,39 @@ public class GatewayLaunchAuthenticationInterceptor implements HandlerIntercepto
         if (!hasValidGatewaySecret(providedSecret) || !hasValidPlayerId(request)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Unauthorized game launch request\"}");
+            response.getWriter().write("{\"error\":\"Unauthorized game request\"}");
             return false;
         }
 
         return true;
     }
 
-    private boolean isLaunchRequest(HttpServletRequest request) {
+    private boolean isProtectedGameRequest(HttpServletRequest request) {
         if (!HttpMethod.POST.matches(request.getMethod())) {
             return false;
         }
 
         String requestUri = request.getRequestURI();
+        return isLaunchRequest(requestUri) || isCloseRequest(requestUri);
+    }
+
+    private boolean isLaunchRequest(String requestUri) {
         if (!requestUri.startsWith("/games/") || !requestUri.endsWith("/launch")) {
             return false;
         }
 
         String gameIdSegment = requestUri.substring("/games/".length(), requestUri.length() - "/launch".length());
         return !gameIdSegment.isBlank() && gameIdSegment.indexOf('/') == -1;
+    }
+
+    private boolean isCloseRequest(String requestUri) {
+        String prefix = "/games/sessions/";
+        String suffix = "/close";
+        if (!requestUri.startsWith(prefix) || !requestUri.endsWith(suffix)) {
+            return false;
+        }
+        String sessionIdSegment = requestUri.substring(prefix.length(), requestUri.length() - suffix.length());
+        return !sessionIdSegment.isBlank() && sessionIdSegment.indexOf('/') == -1;
     }
 
     private boolean hasValidGatewaySecret(String providedSecret) {

@@ -38,21 +38,35 @@
   line-height: 1.45;
 }
 
-.register-form__checkbox {
+.register-form__agreement input {
   width: 22px;
   height: 22px;
-  display: grid;
-  place-items: center;
   flex: 0 0 auto;
-  border-radius: 6px;
-  color: var(--color-bg);
-  background: var(--color-primary);
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.register-form__message {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
   font-size: 14px;
-  font-weight: 900;
+  line-height: 1.4;
+}
+
+.register-form__message--error {
+  color: #ffb4b4;
+  background: rgba(204, 51, 51, 0.14);
+  border: 1px solid rgba(255, 100, 100, 0.28);
 }
 
 .register-form__submit {
   margin-top: 0;
+}
+
+.register-form__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .register-form__divider {

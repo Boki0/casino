@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getPublicGames, type PublicGame } from '../api/gameCatalog'
+import { launchGame } from '../api/gameLaunch'
+import { useAuth } from '../auth/useAuth'
+import { activeGameStorage } from '../services/activeGameStorage'
 import './SlotsPage.css'
 
 type ProviderGroup = {
@@ -29,12 +33,25 @@ function groupGamesByProvider(games: PublicGame[]): ProviderGroup[] {
   )
 }
 
-function GameCard({ game }: { game: PublicGame }) {
+type GameCardProps = {
+  game: PublicGame
+  isLaunching: boolean
+  onPlay: (game: PublicGame) => void
+}
+
+function GameCard({ game, isLaunching, onPlay }: GameCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   const showImage = Boolean(game.thumbnailUrl) && !imageFailed
 
   return (
-    <article className="game-card">
+    <button
+      className="game-card"
+      type="button"
+      aria-busy={isLaunching}
+      aria-label={`${isLaunching ? 'Launching' : 'Play'} ${game.name}`}
+      disabled={isLaunching}
+      onClick={() => onPlay(game)}
+    >
       <div className="game-card__media">
         {showImage ? (
           <img
@@ -48,15 +65,20 @@ function GameCard({ game }: { game: PublicGame }) {
           </div>
         )}
       </div>
-      <h3>{game.name}</h3>
-    </article>
+      <h3>{isLaunching ? 'Launching...' : game.name}</h3>
+    </button>
   )
 }
 
 function SlotsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [games, setGames] = useState<PublicGame[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [launchingGameId, setLaunchingGameId] = useState<string | null>(null)
+  const [launchError, setLaunchError] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -84,6 +106,46 @@ function SlotsPage() {
 
   const providerGroups = useMemo(() => groupGamesByProvider(games), [games])
 
+  async function handlePlay(game: PublicGame) {
+    if (!isAuthenticated) {
+      const from = `${location.pathname}${location.search}${location.hash}`
+      navigate('/login', {
+        state: {
+          from,
+          loginMessage: 'Please log in to play.',
+        },
+      })
+      return
+    }
+
+    if (launchingGameId) return
+
+    const currency = game.supportedCurrencies.includes('EUR')
+      ? 'EUR'
+      : game.supportedCurrencies[0]
+    if (!currency) {
+      setLaunchError('This game does not have a supported currency.')
+      return
+    }
+
+    setLaunchingGameId(game.id)
+    setLaunchError(null)
+
+    try {
+      const launch = await launchGame(game.id, currency)
+      activeGameStorage.save({
+        sessionId: launch.sessionId,
+        gameId: game.id,
+        gameName: game.name,
+        launchUrl: launch.launchUrl,
+      })
+      navigate(`/play/${launch.sessionId}`)
+    } catch {
+      setLaunchError('The game could not be launched. Please try again.')
+      setLaunchingGameId(null)
+    }
+  }
+
   return (
     <div className="slots-page">
       <header className="slots-page__header">
@@ -92,6 +154,11 @@ function SlotsPage() {
       </header>
 
       <div className="slots-page__catalog" aria-live="polite">
+        {launchError && (
+          <p className="slots-page__launch-error" role="alert">
+            {launchError}
+          </p>
+        )}
         {isLoading && <p className="slots-page__status">Loading games...</p>}
         {!isLoading && hasError && (
           <p className="slots-page__status">Games could not be loaded.</p>
@@ -111,7 +178,12 @@ function SlotsPage() {
               </div>
               <div className="provider-games__grid">
                 {provider.games.map((game) => (
-                  <GameCard game={game} key={game.id} />
+                  <GameCard
+                    game={game}
+                    isLaunching={launchingGameId === game.id}
+                    key={game.id}
+                    onPlay={handlePlay}
+                  />
                 ))}
               </div>
             </section>

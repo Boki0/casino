@@ -4,6 +4,7 @@ export type PublicGame = {
   providerCode: string
   providerName: string
   thumbnailUrl: string | null
+  supportedCurrencies: string[]
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '') ?? ''

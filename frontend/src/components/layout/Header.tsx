@@ -1,7 +1,26 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
+import HeaderWalletBalance from './HeaderWalletBalance'
+import { closeGameSession } from '../../api/gameLaunch'
+import { activeGameStorage } from '../../services/activeGameStorage'
 import './Header.css'
 
 function Header() {
+  const navigate = useNavigate()
+  const { isAuthenticated, logout } = useAuth()
+
+  async function handleLogout() {
+    const activeSessionId = window.location.pathname.startsWith('/play/')
+      ? window.location.pathname.slice('/play/'.length)
+      : null
+    if (activeSessionId) {
+      await closeGameSession(activeSessionId).catch(() => undefined)
+      activeGameStorage.clear()
+    }
+    logout()
+    navigate('/', { replace: true })
+  }
+
   return (
     <header className="app-header">
       <div className="app-header__container">
@@ -19,24 +38,40 @@ function Header() {
           >
             Slots
           </NavLink>
-          <a className="app-header__link" href="#">
-            About Us
-          </a>
-          <a className="app-header__link" href="#">
-            FAQ
-          </a>
-          <a className="app-header__link" href="#">
-            VIP Club
-          </a>
+          {isAuthenticated && (
+            <NavLink
+              className={({ isActive }) =>
+                `app-header__link${isActive ? ' app-header__link--active' : ''}`
+              }
+              to="/account/profile"
+            >
+              Profile
+            </NavLink>
+          )}
         </nav>
 
         <div className="app-header__actions">
-          <NavLink className="app-header__login" to="/login">
-            Log In
-          </NavLink>
-          <NavLink className="app-header__register" to="/register">
-            Register
-          </NavLink>
+          {isAuthenticated ? (
+            <>
+              <HeaderWalletBalance />
+              <button
+                className="app-header__logout"
+                type="button"
+                onClick={() => void handleLogout()}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink className="app-header__login" to="/login">
+                Log In
+              </NavLink>
+              <NavLink className="app-header__register" to="/register">
+                Register
+              </NavLink>
+            </>
+          )}
         </div>
       </div>
     </header>

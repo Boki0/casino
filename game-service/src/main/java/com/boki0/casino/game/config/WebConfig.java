@@ -17,6 +17,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(launchAuthenticationInterceptor)
-                .addPathPatterns("/games/*/launch");
+                .addPathPatterns("/games/*/launch", "/games/sessions/*/close");
     }
 }

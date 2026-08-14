@@ -72,18 +72,29 @@
 
 .game-card {
   min-width: 0;
+  width: 100%;
   padding: 10px;
+  color: inherit;
+  text-align: left;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   background: var(--color-surface);
+  cursor: pointer;
   transition:
     border-color 160ms ease,
     transform 160ms ease;
 }
 
-.game-card:hover {
-  border-color: var(--color-surface-light);
-  transform: translateY(-2px);
+.game-card:hover:not(:disabled),
+.game-card:focus-visible {
+  border-color: var(--color-primary);
+  outline: none;
+  transform: scale(1.025);
+}
+
+.game-card:disabled {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 .game-card__media {
@@ -114,6 +125,7 @@
 }
 
 .game-card h3 {
+  min-width: 0;
   margin: 13px 4px 4px;
   overflow: hidden;
   color: var(--color-text);
@@ -121,6 +133,16 @@
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.slots-page__launch-error {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  color: #ffb4b4;
+  background: rgba(204, 51, 51, 0.14);
+  border: 1px solid rgba(255, 100, 100, 0.28);
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 @media (max-width: 640px) {
