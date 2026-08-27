@@ -26,8 +26,8 @@ public interface DepositOrderRepository extends JpaRepository<DepositOrder, UUID
             select deposit
             from DepositOrder deposit
             where deposit.authUserId = :authUserId
-              and (:fromCreatedAt is null or deposit.createdAt >= :fromCreatedAt)
-              and (:toCreatedAt is null or deposit.createdAt <= :toCreatedAt)
+              and deposit.createdAt >= coalesce(:fromCreatedAt, deposit.createdAt)
+              and deposit.createdAt <= coalesce(:toCreatedAt, deposit.createdAt)
             """)
     Page<DepositOrder> findPaymentHistory(
             @Param("authUserId") UUID authUserId,
