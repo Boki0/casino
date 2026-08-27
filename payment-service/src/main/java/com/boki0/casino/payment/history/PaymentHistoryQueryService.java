@@ -65,6 +65,8 @@ public class PaymentHistoryQueryService {
                 depositOrder.getCurrency(),
                 PaymentHistoryStatus.valueOf(depositOrder.getStatus().name()),
                 depositOrder.getProvider(),
+                depositOrder.getBalanceBefore(),
+                depositOrder.getBalanceAfter(),
                 depositOrder.getCreatedAt(),
                 depositOrder.getCompletedAt()
         );

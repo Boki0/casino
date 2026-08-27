@@ -19,6 +19,7 @@ public class RabbitMQConfig {
     public static final String QUEUE_PAYMENT_DEPOSIT_COMPLETED = "wallet-service.payment-deposit-completed.queue";
     public static final String ROUTING_KEY_USER_REGISTERED = "user.registered";
     public static final String ROUTING_KEY_PAYMENT_DEPOSIT_COMPLETED = "payment.deposit.completed";
+    public static final String ROUTING_KEY_WALLET_DEPOSIT_CREDITED = "wallet.deposit.credited";
 
     @Bean
     public TopicExchange casinoEventsExchange() {

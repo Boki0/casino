@@ -240,6 +240,8 @@ class PaymentHistoryControllerTest {
                 "EUR",
                 PaymentHistoryStatus.COMPLETED,
                 PaymentProviderType.STRIPE,
+                null,
+                null,
                 LocalDateTime.of(2026, 8, 20, 10, 0),
                 LocalDateTime.of(2026, 8, 20, 10, 1)
         );

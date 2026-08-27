@@ -12,6 +12,8 @@ public record PaymentHistoryItemResponse(
         String currency,
         PaymentHistoryStatus status,
         PaymentProviderType provider,
+        BigDecimal balanceBefore,
+        BigDecimal balanceAfter,
         LocalDateTime createdAt,
         LocalDateTime completedAt
 ) {

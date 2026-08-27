@@ -8,8 +8,10 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 public interface DepositOrderRepository extends JpaRepository<DepositOrder, UUID> {
 
@@ -21,6 +23,10 @@ public interface DepositOrderRepository extends JpaRepository<DepositOrder, UUID
     );
 
     boolean existsByIdempotencyKey(String idempotencyKey);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select deposit from DepositOrder deposit where deposit.id = :id")
+    Optional<DepositOrder> findByIdForUpdate(@Param("id") UUID id);
 
     @Query("""
             select deposit

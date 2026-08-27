@@ -7,6 +7,7 @@ import com.boki0.casino.payment.entity.DepositStatus;
 import com.boki0.casino.payment.entity.PaymentProviderType;
 import com.boki0.casino.payment.event.DomainEventPublisher;
 import com.boki0.casino.payment.event.PaymentDepositCompletedEvent;
+import com.boki0.casino.payment.event.WalletDepositCreditedEvent;
 import com.boki0.casino.payment.exception.PaymentAccessDeniedException;
 import com.boki0.casino.payment.exception.PaymentResourceNotFoundException;
 import com.boki0.casino.payment.provider.CreateCheckoutCommand;
@@ -82,6 +83,11 @@ public class DepositService {
             return toDepositResponse(depositOrder);
         }
 
+        if (depositOrder.getStatus() == DepositStatus.PROCESSING) {
+            publishWalletCreditRequest(depositOrder);
+            return toDepositResponse(depositOrder);
+        }
+
         if (depositOrder.getStatus() != DepositStatus.PENDING) {
             throw new IllegalArgumentException(
                     "Only PENDING deposit orders can be completed manually"
@@ -132,6 +138,12 @@ public class DepositService {
             return toDepositResponse(depositOrder);
         }
 
+        if (depositOrder.getStatus() == DepositStatus.PROCESSING) {
+            LOGGER.info("Deposit order id={} is awaiting wallet credit; republishing request", depositOrder.getId());
+            publishWalletCreditRequest(depositOrder);
+            return toDepositResponse(depositOrder);
+        }
+
         if (depositOrder.getStatus() != DepositStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING deposit orders can be completed from payment events");
         }
@@ -142,6 +154,34 @@ public class DepositService {
         DepositOrder savedDepositOrder = completeDepositAndPublishEvent(depositOrder);
 
         return toDepositResponse(savedDepositOrder);
+    }
+
+    @Transactional
+    public void recordWalletCredit(WalletDepositCreditedEvent event) {
+        validateWalletCreditEvent(event);
+
+        DepositOrder depositOrder = depositOrderRepository.findByIdForUpdate(event.depositOrderId())
+                .orElseThrow(() -> new PaymentResourceNotFoundException(
+                        "Deposit order not found: " + event.depositOrderId()
+                ));
+
+        validateWalletCreditMatchesDeposit(depositOrder, event);
+
+        if (depositOrder.getWalletTransactionId() != null) {
+            if (!depositOrder.getWalletTransactionId().equals(event.walletTransactionId())
+                    || depositOrder.getBalanceBefore().compareTo(event.balanceBefore()) != 0
+                    || depositOrder.getBalanceAfter().compareTo(event.balanceAfter()) != 0) {
+                throw new IllegalArgumentException("Conflicting wallet credit result for deposit");
+            }
+            return;
+        }
+
+        depositOrder.setWalletTransactionId(event.walletTransactionId());
+        depositOrder.setBalanceBefore(event.balanceBefore());
+        depositOrder.setBalanceAfter(event.balanceAfter());
+        depositOrder.setStatus(DepositStatus.COMPLETED);
+        depositOrder.setCompletedAt(LocalDateTime.now());
+        depositOrderRepository.save(depositOrder);
     }
 
     private DepositResponse createNewDeposit(UUID authUserId, CreateDepositRequest request) {
@@ -242,15 +282,41 @@ public class DepositService {
     }
 
     private DepositOrder completeDepositAndPublishEvent(DepositOrder depositOrder) {
-        LOGGER.info("Marking deposit order id={} as COMPLETED", depositOrder.getId());
-        depositOrder.setStatus(DepositStatus.COMPLETED);
-        depositOrder.setCompletedAt(LocalDateTime.now());
+        LOGGER.info("Marking deposit order id={} as PROCESSING", depositOrder.getId());
+        depositOrder.setStatus(DepositStatus.PROCESSING);
 
         DepositOrder savedDepositOrder = depositOrderRepository.save(depositOrder);
-        domainEventPublisher.publish(toPaymentDepositCompletedEvent(savedDepositOrder));
-        LOGGER.info("Published PaymentDepositCompletedEvent for depositOrderId={}", savedDepositOrder.getId());
+        publishWalletCreditRequest(savedDepositOrder);
 
         return savedDepositOrder;
+    }
+
+    private void publishWalletCreditRequest(DepositOrder depositOrder) {
+        domainEventPublisher.publish(toPaymentDepositCompletedEvent(depositOrder));
+        LOGGER.info("Published PaymentDepositCompletedEvent for depositOrderId={}", depositOrder.getId());
+    }
+
+    private void validateWalletCreditEvent(WalletDepositCreditedEvent event) {
+        if (event == null || !WalletDepositCreditedEvent.EVENT_TYPE.equals(event.eventType())) {
+            throw new IllegalArgumentException("Invalid wallet deposit credited event");
+        }
+        if (event.depositOrderId() == null || event.authUserId() == null
+                || event.walletTransactionId() == null || event.amount() == null
+                || event.currency() == null || event.balanceBefore() == null
+                || event.balanceAfter() == null || !"COMPLETED".equals(event.status())) {
+            throw new IllegalArgumentException("Incomplete wallet deposit credited event");
+        }
+    }
+
+    private void validateWalletCreditMatchesDeposit(
+            DepositOrder depositOrder,
+            WalletDepositCreditedEvent event
+    ) {
+        if (!depositOrder.getAuthUserId().equals(event.authUserId())
+                || depositOrder.getCreditsAmount().compareTo(event.amount()) != 0
+                || !depositOrder.getCurrency().equalsIgnoreCase(event.currency())) {
+            throw new IllegalArgumentException("Wallet credit result does not match deposit");
+        }
     }
 
     private PaymentDepositCompletedEvent toPaymentDepositCompletedEvent(DepositOrder depositOrder) {

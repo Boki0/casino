@@ -79,6 +79,15 @@ public class DepositOrder {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "wallet_transaction_id")
+    private UUID walletTransactionId;
+
+    @Column(name = "balance_before", precision = 19, scale = 2)
+    private BigDecimal balanceBefore;
+
+    @Column(name = "balance_after", precision = 19, scale = 2)
+    private BigDecimal balanceAfter;
+
     @PrePersist
     void prePersist() {
         LocalDateTime now = LocalDateTime.now();
@@ -213,5 +222,29 @@ public class DepositOrder {
 
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public UUID getWalletTransactionId() {
+        return walletTransactionId;
+    }
+
+    public void setWalletTransactionId(UUID walletTransactionId) {
+        this.walletTransactionId = walletTransactionId;
+    }
+
+    public BigDecimal getBalanceBefore() {
+        return balanceBefore;
+    }
+
+    public void setBalanceBefore(BigDecimal balanceBefore) {
+        this.balanceBefore = balanceBefore;
+    }
+
+    public BigDecimal getBalanceAfter() {
+        return balanceAfter;
+    }
+
+    public void setBalanceAfter(BigDecimal balanceAfter) {
+        this.balanceAfter = balanceAfter;
     }
 }

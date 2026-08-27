@@ -5,11 +5,15 @@ import com.boki0.casino.wallet.dto.CreditWalletRequest;
 import com.boki0.casino.wallet.dto.WalletTransactionResponse;
 import com.boki0.casino.wallet.entity.WalletReferenceType;
 import com.boki0.casino.wallet.event.PaymentDepositCompletedEvent;
+import com.boki0.casino.wallet.event.WalletDepositCreditedEvent;
 import com.boki0.casino.wallet.service.WalletService;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,9 +23,14 @@ public class PaymentDepositCompletedConsumer {
     private static final String EVENT_TYPE_PAYMENT_DEPOSIT_COMPLETED = "PAYMENT_DEPOSIT_COMPLETED";
 
     private final WalletService walletService;
+    private final RabbitTemplate rabbitTemplate;
 
-    public PaymentDepositCompletedConsumer(WalletService walletService) {
+    public PaymentDepositCompletedConsumer(
+            WalletService walletService,
+            RabbitTemplate rabbitTemplate
+    ) {
         this.walletService = walletService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_PAYMENT_DEPOSIT_COMPLETED)
@@ -45,6 +54,8 @@ public class PaymentDepositCompletedConsumer {
                     "Payment deposit completed: " + event.provider()
             ));
 
+            publishWalletDepositCredited(event, response);
+
             LOGGER.info(
                     "Credited wallet for PaymentDepositCompletedEvent eventId={}, depositOrderId={}, transactionId={}",
                     event.eventId(),
@@ -60,6 +71,32 @@ public class PaymentDepositCompletedConsumer {
             );
             throw exception;
         }
+    }
+
+    private void publishWalletDepositCredited(
+            PaymentDepositCompletedEvent event,
+            WalletTransactionResponse response
+    ) {
+        WalletDepositCreditedEvent creditedEvent = new WalletDepositCreditedEvent(
+                UUID.randomUUID(),
+                WalletDepositCreditedEvent.EVENT_TYPE,
+                WalletDepositCreditedEvent.EVENT_VERSION,
+                event.depositOrderId(),
+                event.authUserId(),
+                response.id(),
+                response.amount(),
+                response.currency(),
+                response.balanceBefore(),
+                response.balanceAfter(),
+                response.status().name(),
+                Instant.now()
+        );
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.ROUTING_KEY_WALLET_DEPOSIT_CREDITED,
+                creditedEvent
+        );
     }
 
     private void validateEvent(PaymentDepositCompletedEvent event) {
